@@ -8,10 +8,10 @@ export function ClassSelection() {
         
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white mb-4">
-            Welcome to the Mentor Dashboard
+            Manage Your Classroom
           </h1>
           <p className="text-xl text-slate-400">
-            Would you like to create a new classroom or join an existing one?
+            Create a new classroom or join an existing one to get started.
           </p>
         </div>
 
@@ -21,12 +21,12 @@ export function ClassSelection() {
             <div className="w-20 h-20 bg-indigo-500/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 mb-6 group-hover:scale-110 transition-transform">
               <Plus className="w-10 h-10 text-indigo-400" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-4">Create Classroom</h3>
+            <h3 className="text-2xl font-bold text-white mb-4">Create a Classroom</h3>
             <p className="text-slate-400 mb-8 h-16">
-              Start a new cohort. You'll get a code to share with your students.
+              Create a classroom, generate a unique class code, and invite students to join.
             </p>
             <Link to="/staff/classrooms/create" className="btn-primary w-full">
-              Create New Class
+              Create a Classroom
             </Link>
           </div>
 
@@ -35,12 +35,12 @@ export function ClassSelection() {
             <div className="w-20 h-20 bg-blue-500/10 rounded-2xl flex items-center justify-center border border-blue-500/20 mb-6 group-hover:scale-110 transition-transform">
               <LogIn className="w-10 h-10 text-blue-400" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-4">Join Classroom</h3>
+            <h3 className="text-2xl font-bold text-white mb-4">Join a Classroom</h3>
             <p className="text-slate-400 mb-8 h-16">
-              Co-teach an existing classroom. You'll need the classroom code.
+              Enter a classroom code to join an existing classroom and access its learning environment.
             </p>
             <Link to="/staff/join-class" className="btn-secondary w-full">
-              Join Existing Class
+              Join a Classroom
             </Link>
           </div>
         </div>

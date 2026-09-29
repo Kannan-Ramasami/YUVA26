@@ -26,10 +26,10 @@ export function ModeSelection() {
         
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white mb-4">
-            How would you like to learn today?
+            Choose Your Learning Mode
           </h1>
           <p className="text-xl text-slate-400">
-            Choose your learning context to begin.
+            Select how you want to continue your learning journey.
           </p>
         </div>
 
@@ -39,12 +39,12 @@ export function ModeSelection() {
             <div className="w-20 h-20 bg-primary-500/10 rounded-2xl flex items-center justify-center border border-primary-500/20 mb-6 group-hover:scale-110 transition-transform">
               <BookOpen className="w-10 h-10 text-primary-400" />
             </div>
-            <h3 className="text-2xl font-bold text-white mb-4">Learn Individually</h3>
+            <h3 className="text-2xl font-bold text-white mb-4">Individual Learning</h3>
             <p className="text-slate-400 mb-8 h-16">
-              Follow a learning path personalized to your own mastery, history, and goals.
+              Learn at your own pace with a personalized learning path based on your mastery, history, and learning needs.
             </p>
             <Link to="/student/individual" className="btn-primary w-full">
-              Start Individual Mode
+              Continue with Individual Learning
             </Link>
           </div>
 
@@ -55,13 +55,13 @@ export function ModeSelection() {
             </div>
             <h3 className="text-2xl font-bold text-white mb-4">Classroom Learning</h3>
             <p className="text-slate-400 mb-8 h-16">
-              Learn within a teacher-guided classroom while your path adapts to your needs.
+              Join a mentor-guided classroom and follow an adaptive learning path based on your progress and mastery.
             </p>
             
             <div className="w-full">
               {joinedClassroomsCount === 0 ? (
                 <div>
-                  <p className="text-xs text-amber-400 font-semibold mb-2">You aren't in any classrooms yet</p>
+                  <p className="text-xs text-amber-400 font-semibold mb-2">No classrooms joined yet</p>
                   <Link to="/student/classroom/join" className="btn-secondary w-full">
                     Join a Classroom
                   </Link>

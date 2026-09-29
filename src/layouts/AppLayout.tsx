@@ -1,5 +1,5 @@
 import { Outlet, Link } from 'react-router-dom';
-import { Sparkles, LogIn, LogOut, LayoutDashboard } from 'lucide-react';
+import { Sparkles, LogOut, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export function AppLayout() {
@@ -53,23 +53,7 @@ export function AppLayout() {
                   Sign Out
                 </button>
               </>
-            ) : (
-              <>
-                <Link 
-                  to="/student/login" 
-                  className="hidden sm:flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
-                >
-                  <LogIn className="w-4 h-4" />
-                  Login
-                </Link>
-                <a 
-                  href="#contact"
-                  className="bg-primary-600 hover:bg-primary-500 text-white px-5 py-2 rounded-full font-medium transition-all shadow-[0_0_15px_rgba(124,58,237,0.3)] hover:shadow-[0_0_25px_rgba(124,58,237,0.5)] flex items-center gap-2 text-sm"
-                >
-                  Contact
-                </a>
-              </>
-            )}
+            ) : null}
           </div>
         </header>
       </div>
