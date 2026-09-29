@@ -63,7 +63,7 @@ export function StudentDashboard() {
         <div className="lg:col-span-2 space-y-8">
           
           {/* 2. Current Learning Section */}
-          <section className="glass-panel p-6 sm:p-8 rounded-3xl relative overflow-hidden border-primary-500/30 shadow-[0_0_30px_rgba(124,58,237,0.1)]">
+          <section className="glass-panel interactive-card p-6 sm:p-8 rounded-3xl relative overflow-hidden border-indigo-500/30">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
             
             <h2 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
@@ -76,7 +76,7 @@ export function StudentDashboard() {
                 <GraduationCap className="w-16 h-16 text-slate-600 mx-auto mb-4" />
                 <h3 className="text-xl font-bold text-white mb-2">Ready to begin?</h3>
                 <p className="text-slate-400 max-w-md mx-auto mb-6">Take your first diagnostic assessment so the adaptive engine can build your initial knowledge graph.</p>
-                <Link to="/student/diagnostic/start" className="bg-primary-600 hover:bg-primary-500 text-white px-6 py-3 rounded-full font-medium transition-colors shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2 mx-auto w-max">
+                <Link to="/student/diagnostic/start" className="btn-primary flex mx-auto w-max">
                   <Play className="w-4 h-4 fill-current" />
                   Start Diagnostic
                 </Link>
@@ -103,7 +103,7 @@ export function StudentDashboard() {
                   </div>
                 </div>
 
-                <button className="w-full sm:w-auto bg-primary-600 hover:bg-primary-500 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:-translate-y-1 flex items-center justify-center gap-2 group shrink-0">
+                <button className="w-full sm:w-auto btn-primary group shrink-0">
                   <Play className="w-5 h-5 fill-current group-hover:scale-110 transition-transform" />
                   Continue Learning
                 </button>
@@ -113,18 +113,18 @@ export function StudentDashboard() {
 
           {/* 3. Learning Modes */}
           <section className="grid sm:grid-cols-2 gap-6">
-            <div className="glass-panel p-6 rounded-2xl hover:border-primary-500/50 transition-colors group">
+            <div className="glass-panel interactive-card p-6 rounded-2xl group">
               <div className="w-12 h-12 bg-primary-500/10 rounded-xl flex items-center justify-center border border-primary-500/20 mb-4 group-hover:scale-110 transition-transform">
                 <BookOpen className="w-6 h-6 text-primary-400" />
               </div>
               <h3 className="text-lg font-bold text-white mb-2">Learn Individually</h3>
               <p className="text-slate-400 text-sm mb-6 h-10">Follow a learning path personalized to your own mastery, history, and learning goals.</p>
-              <Link to="/student/individual" className="w-full bg-surfaceBorder hover:bg-surfaceBorder/80 text-white py-2.5 rounded-lg font-medium transition-colors border border-slate-700 block text-center">
+              <Link to="/student/individual" className="btn-secondary w-full text-center">
                 Start Individual Learning
               </Link>
             </div>
 
-            <div className="glass-panel p-6 rounded-2xl hover:border-indigo-500/50 transition-colors group">
+            <div className="glass-panel interactive-card p-6 rounded-2xl group">
               <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center border border-indigo-500/20 mb-4 group-hover:scale-110 transition-transform">
                 <Users className="w-6 h-6 text-indigo-400" />
               </div>
@@ -134,12 +134,12 @@ export function StudentDashboard() {
               {joinedClassroomsCount === 0 ? (
                 <div>
                   <p className="text-xs text-amber-400 font-semibold mb-2">No classrooms yet</p>
-                  <Link to="/student/classroom/join" className="w-full bg-surfaceBorder hover:bg-surfaceBorder/80 text-white py-2.5 rounded-lg font-medium transition-colors border border-slate-700 block text-center">
+                  <Link to="/student/classroom/join" className="btn-secondary w-full text-center">
                     Join a Classroom
                   </Link>
                 </div>
               ) : (
-                <Link to="/student/classrooms" className="w-full bg-surfaceBorder hover:bg-surfaceBorder/80 text-white py-2.5 rounded-lg font-medium transition-colors border border-slate-700 block text-center">
+                <Link to="/student/classrooms" className="btn-secondary w-full text-center">
                   Open Classrooms
                 </Link>
               )}

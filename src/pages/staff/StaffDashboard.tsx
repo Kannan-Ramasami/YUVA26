@@ -60,12 +60,11 @@ export function StaffDashboard() {
           <p className="text-slate-400 mt-2">Here is your classroom overview for today.</p>
         </div>
         <div className="flex flex-wrap gap-3 w-full sm:w-auto">
-          {/* Create Classroom CTA */}
-          <Link to="/staff/classrooms/create" className="flex-1 sm:flex-none bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl font-medium transition-all shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:shadow-[0_0_25px_rgba(79,70,229,0.5)] flex items-center justify-center gap-2 text-sm">
+          <Link to="/staff/classrooms/create" className="flex-1 sm:flex-none btn-primary text-sm px-4 py-2.5">
             <Plus className="w-4 h-4" />
             Create Class
           </Link>
-          <Link to="/admin/evaluation" className="flex-1 sm:flex-none bg-surfaceBorder hover:bg-surfaceBorder/80 text-white px-4 py-2.5 rounded-xl font-medium transition-all flex items-center justify-center gap-2 text-sm">
+          <Link to="/admin/evaluation" className="flex-1 sm:flex-none btn-secondary text-sm px-4 py-2.5">
             Run Engine Diagnostics
           </Link>
         </div>
@@ -73,7 +72,7 @@ export function StaffDashboard() {
 
       {/* 2. Classroom Overview */}
       <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between hover:border-indigo-500/30 transition-colors">
+        <div className="glass-panel interactive-card p-5 rounded-2xl flex flex-col justify-between">
           <div className="flex items-center gap-2 text-slate-400 mb-2">
             <BookOpen className="w-4 h-4 text-indigo-400" />
             <span className="text-xs font-semibold uppercase tracking-wider">Active Classes</span>
@@ -81,7 +80,7 @@ export function StaffDashboard() {
           <div className="text-3xl font-bold text-white">{classrooms.length}</div>
         </div>
         
-        <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between hover:border-blue-500/30 transition-colors">
+        <div className="glass-panel interactive-card p-5 rounded-2xl flex flex-col justify-between">
           <div className="flex items-center gap-2 text-slate-400 mb-2">
             <Users className="w-4 h-4 text-blue-400" />
             <span className="text-xs font-semibold uppercase tracking-wider">Total Students</span>

@@ -61,7 +61,7 @@ export function StudentLayout() {
             </span>
             <button 
               onClick={signOut}
-              className="bg-surfaceBorder hover:bg-surfaceBorder/80 border border-slate-700 text-white p-2 sm:px-4 sm:py-2 rounded-full font-medium transition-all flex items-center gap-2 text-sm"
+              className="btn-secondary p-2 sm:px-4 sm:py-2 text-sm"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />

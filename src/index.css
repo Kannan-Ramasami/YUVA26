@@ -4,16 +4,68 @@
 
 @layer base {
   body {
-    @apply bg-background text-slate-100 font-sans antialiased overflow-x-hidden;
+    @apply bg-background text-slate-100 font-sans antialiased overflow-x-hidden selection:bg-indigo-500/30 selection:text-indigo-200;
+  }
+
+  /* Accessibility: Global Focus Styles */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-indigo-500 ring-offset-2 ring-offset-background transition-shadow;
+  }
+
+  /* Custom Scrollbar for a premium feel */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-background;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surfaceBorder rounded-full hover:bg-slate-600 transition-colors;
   }
 }
 
 @layer utilities {
   .glass-panel {
-    @apply bg-surface/50 backdrop-blur-md border border-surfaceBorder shadow-xl;
+    @apply bg-surface/60 backdrop-blur-xl border border-surfaceBorder shadow-[0_8px_32px_rgba(0,0,0,0.4)] relative overflow-hidden;
+  }
+  
+  .glass-panel::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 pointer-events-none transition-opacity duration-500;
+  }
+
+  .glass-panel:hover::before {
+    @apply opacity-100;
   }
   
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-300 to-primary-600;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-purple-300 to-indigo-400;
+  }
+
+  /* Standardized interactive elements */
+  .interactive-card {
+    @apply transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 hover:shadow-[0_10px_40px_-10px_rgba(99,102,241,0.3)] hover:border-indigo-500/30 cursor-pointer;
+  }
+
+  /* Standardized Buttons to reduce inline clutter */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none active:scale-[0.98];
+  }
+
+  .btn-primary {
+    @apply btn bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_-5px_rgba(99,102,241,0.5)] hover:shadow-[0_0_25px_-2px_rgba(99,102,241,0.7)];
+  }
+
+  .btn-secondary {
+    @apply btn bg-surfaceBorder hover:bg-surfaceBorder/80 text-white border border-transparent hover:border-slate-600;
+  }
+
+  .btn-outline {
+    @apply btn bg-transparent border-2 border-indigo-500/50 text-indigo-300 hover:border-indigo-400 hover:bg-indigo-500/10;
+  }
+
+  .btn-danger {
+    @apply btn bg-rose-600/20 text-rose-400 hover:bg-rose-600/30 border border-rose-500/30 hover:border-rose-500/50;
   }
 }

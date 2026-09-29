@@ -119,7 +119,7 @@ export function DiagnosticResult() {
       <div className="flex justify-center">
         <Link 
           to="/student/dashboard"
-          className="bg-primary-600 hover:bg-primary-500 text-white px-10 py-4 rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:-translate-y-1 flex items-center justify-center gap-3"
+          className="btn-primary px-10 py-4"
         >
           <Play className="w-5 h-5 fill-current" />
           Continue to Dashboard

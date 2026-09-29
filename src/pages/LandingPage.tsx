@@ -38,14 +38,14 @@ export function LandingPage() {
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <Link 
             to="/student/login"
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary-600 hover:bg-primary-500 text-white px-8 py-4 rounded-full font-bold text-lg transition-all shadow-[0_0_20px_rgba(124,58,237,0.4)] hover:shadow-[0_0_30px_rgba(124,58,237,0.6)] hover:-translate-y-1"
+            className="flex-1 sm:flex-none btn-primary rounded-full px-8 py-4 text-lg"
           >
             Start Learning
             <ArrowRight className="w-5 h-5" />
           </Link>
           <Link 
             to="/staff/login"
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-surfaceBorder hover:bg-surfaceBorder/80 border border-slate-700 text-white px-8 py-4 rounded-full font-bold text-lg transition-all hover:-translate-y-1"
+            className="flex-1 sm:flex-none btn-secondary rounded-full px-8 py-4 text-lg"
           >
             Explore for Educators
           </Link>
@@ -56,7 +56,7 @@ export function LandingPage() {
       <section id="roles" className="py-16 px-4 sm:px-6 lg:px-8 max-w-6xl w-full">
         <div className="grid md:grid-cols-2 gap-8">
           {/* Student Card */}
-          <div className="glass-panel p-8 rounded-3xl relative overflow-hidden group hover:border-primary-500/50 transition-colors">
+          <div className="glass-panel interactive-card p-8 rounded-3xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-primary-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 group-hover:bg-primary-500/20 transition-colors pointer-events-none"></div>
             
             <GraduationCap className="w-16 h-16 text-primary-400 mb-6" />
@@ -66,7 +66,7 @@ export function LandingPage() {
             </p>
             <Link 
               to="/student/login"
-              className="inline-flex items-center gap-2 text-primary-400 font-semibold group-hover:text-primary-300 transition-colors"
+              className="btn-primary w-full group-hover:bg-primary-500 transition-colors"
             >
               Continue as Student
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -74,7 +74,7 @@ export function LandingPage() {
           </div>
 
           {/* Staff Card */}
-          <div className="glass-panel p-8 rounded-3xl relative overflow-hidden group hover:border-indigo-500/50 transition-colors">
+          <div className="glass-panel interactive-card p-8 rounded-3xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 group-hover:bg-indigo-500/20 transition-colors pointer-events-none"></div>
             
             <Users className="w-16 h-16 text-indigo-400 mb-6" />
@@ -84,7 +84,7 @@ export function LandingPage() {
             </p>
             <Link 
               to="/staff/login"
-              className="inline-flex items-center gap-2 text-indigo-400 font-semibold group-hover:text-indigo-300 transition-colors"
+              className="btn-outline w-full text-indigo-300 hover:text-white"
             >
               Continue as Staff
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

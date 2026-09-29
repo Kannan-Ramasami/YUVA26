@@ -42,7 +42,7 @@ export function StartDiagnostic() {
         <button
           onClick={handleStart}
           disabled={loading}
-          className="bg-primary-600 hover:bg-primary-500 text-white px-8 py-4 rounded-xl font-bold transition-all shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:-translate-y-1 flex items-center justify-center gap-3 mx-auto w-full sm:w-auto min-w-[200px] relative z-10 disabled:opacity-50"
+          className="btn-primary mx-auto w-full sm:w-auto min-w-[200px] relative z-10"
         >
           {loading ? (
             <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
