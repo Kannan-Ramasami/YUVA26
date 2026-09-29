@@ -6,7 +6,9 @@ import { StudentDashboard } from './pages/StudentDashboard';
 import { StaffDashboard } from './pages/staff/StaffDashboard';
 import { CreateClassroom } from './pages/staff/CreateClassroom';
 import { StaffClassroomDetail } from './pages/staff/ClassroomDetail';
-import { StaffClassrooms, StaffInterventions, StaffAnalytics } from './pages/staff/Placeholders';
+import { StaffStudentProfile } from './pages/staff/StudentProfile';
+import { StaffClassrooms, StaffInterventions } from './pages/staff/Placeholders';
+import { StaffAnalytics } from './pages/staff/StaffAnalytics';
 import { StaffLayout } from './layouts/StaffLayout';
 import { StudentClassroomDetail } from './pages/student/ClassroomDetail';
 import { JoinClassroom } from './pages/student/JoinClassroom';
@@ -21,6 +23,8 @@ import { ReviewCenter } from './pages/student/ReviewCenter';
 import { LearningWorkspace } from './pages/student/LearningWorkspace';
 import { ConceptGraph as StudentConceptGraph } from './pages/student/ConceptGraph';
 import { StaffConceptGraph } from './pages/staff/ConceptGraph';
+import { DemoComparison } from './pages/demo/AdaptiveComparison';
+import { EvaluationSuite } from './pages/admin/EvaluationSuite';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -38,6 +42,7 @@ function App() {
             <Route path="student/register" element={<Register role="student" />} />
             <Route path="staff/login" element={<Login role="staff" />} />
             <Route path="staff/register" element={<Register role="staff" />} />
+            <Route path="demo/adaptive-comparison" element={<DemoComparison />} />
           </Route>
 
           {/* Protected Student Routes */}
@@ -70,9 +75,11 @@ function App() {
               <Route path="staff/graph" element={<StaffConceptGraph />} />
               <Route path="staff/classrooms/create" element={<CreateClassroom />} />
               <Route path="staff/classrooms/:id" element={<StaffClassroomDetail />} />
+              <Route path="staff/student/:studentId" element={<StaffStudentProfile />} />
               <Route path="staff/classrooms" element={<StaffClassrooms />} />
               <Route path="staff/interventions" element={<StaffInterventions />} />
               <Route path="staff/analytics" element={<StaffAnalytics />} />
+              <Route path="admin/evaluation" element={<EvaluationSuite />} />
               <Route path="staff" element={<StaffDashboard />} />
             </Route>
           </Route>

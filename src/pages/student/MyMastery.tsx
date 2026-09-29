@@ -2,24 +2,26 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { BrainCircuit, Activity, ShieldAlert, TrendingUp, TrendingDown } from 'lucide-react';
-import type { LearnerConceptState } from '../../types/evidence';
+import type { LearnerConceptState, MasteryChangeLog } from '../../types/evidence';
 import { PYTHON_CONCEPTS } from '../../features/diagnostic/data/pythonDiagnostic';
 
 export function MyMastery() {
   const { user } = useAuth();
   const [states, setStates] = useState<LearnerConceptState[]>([]);
+  const [logs, setLogs] = useState<MasteryChangeLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [devMode, setDevMode] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     const fetchStates = async () => {
-      const { data } = await supabase
-        .from('learner_concept_states')
-        .select('*')
-        .eq('student_id', user.id);
+      const [statesRes, logsRes] = await Promise.all([
+        supabase.from('learner_concept_states').select('*').eq('student_id', user.id),
+        supabase.from('mastery_change_logs').select('*').eq('student_id', user.id).order('timestamp', { ascending: true })
+      ]);
       
-      if (data) setStates(data);
+      if (statesRes.data) setStates(statesRes.data);
+      if (logsRes.data) setLogs(logsRes.data);
       setLoading(false);
     };
     fetchStates();
@@ -29,12 +31,13 @@ export function MyMastery() {
     return <div className="flex-1 flex justify-center p-12"><div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>;
   }
 
-  // Map state to human readable concepts
   const displayData = PYTHON_CONCEPTS.map(concept => {
     const state = states.find(s => s.concept_id === concept.id);
+    const conceptLogs = logs.filter(l => l.concept_id === concept.id);
     return {
       concept,
-      state
+      state,
+      conceptLogs
     };
   });
 
@@ -60,6 +63,44 @@ export function MyMastery() {
     return "Keep learning and practicing to build your mastery.";
   };
 
+  // Generate Global Insights
+  const generateInsights = () => {
+    const insights = [];
+    const activeStates = states.filter(s => s.attempt_count > 0);
+    
+    // Find concept with most recent improvement
+    const improvedConcept = activeStates.find(s => s.recent_correctness === 1 && s.attempt_count >= 3);
+    if (improvedConcept) {
+      const name = PYTHON_CONCEPTS.find(c => c.id === improvedConcept.concept_id)?.name;
+      insights.push(`Your mastery of ${name} has steadily increased over your last attempts.`);
+    }
+
+    // Find concepts due for review (simulated simple logic: > 30 days or status needs review)
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const reviewDue = activeStates.find(s => {
+      const lastAttempt = s.last_attempt_at ? new Date(s.last_attempt_at).getTime() : 0;
+      return lastAttempt > 0 && lastAttempt < thirtyDaysAgo;
+    });
+    if (reviewDue) {
+      const name = PYTHON_CONCEPTS.find(c => c.id === reviewDue.concept_id)?.name;
+      insights.push(`${name} is due for review.`);
+    }
+
+    // Check difficulty consistency
+    const consistentMedium = activeStates.find(s => s.difficulty_exposure?.['medium'] > 3 && s.recent_correctness > 0.6);
+    if (consistentMedium) {
+      insights.push(`You are consistently successful on medium-difficulty questions.`);
+    }
+
+    if (insights.length === 0 && activeStates.length > 0) {
+      insights.push("You're building foundational knowledge. Keep practicing!");
+    }
+
+    return insights;
+  };
+
+  const insights = generateInsights();
+
   return (
     <div className="max-w-5xl mx-auto w-full pb-20 animate-fade-in-up">
       <div className="flex justify-between items-center mb-8">
@@ -80,9 +121,29 @@ export function MyMastery() {
         </button>
       </div>
 
+      {insights.length > 0 && (
+        <div className="mb-8 p-6 glass-panel rounded-2xl border border-indigo-500/30">
+          <h2 className="text-sm font-bold text-indigo-400 uppercase tracking-widest mb-4">Learning Insights</h2>
+          <ul className="space-y-3">
+            {insights.map((insight, idx) => (
+              <li key={idx} className="flex items-start gap-3">
+                <div className="p-1 rounded-full bg-indigo-500/20 text-indigo-400 mt-0.5">
+                  <Activity className="w-4 h-4" />
+                </div>
+                <span className="text-slate-300 font-medium">{insight}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="grid lg:grid-cols-2 gap-6">
-        {displayData.map(({ concept, state }, idx) => (
-          <div key={idx} className="glass-panel p-6 rounded-2xl flex flex-col h-full border border-surfaceBorder/50 hover:border-indigo-500/30 transition-colors relative overflow-hidden">
+        {displayData.map(({ concept, state, conceptLogs }, idx) => {
+          // Calculate historical trend points (max 5)
+          const historyPoints = conceptLogs.slice(-5).map(l => Math.round(l.new_mastery));
+          
+          return (
+            <div key={idx} className="glass-panel p-6 rounded-2xl flex flex-col h-full border border-surfaceBorder/50 hover:border-indigo-500/30 transition-colors relative overflow-hidden">
             
             {/* Status Indicator Bar */}
             <div className={`absolute top-0 left-0 w-full h-1 ${
@@ -142,6 +203,21 @@ export function MyMastery() {
               </div>
             )}
 
+            {/* Mastery History Trend */}
+            {historyPoints.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-surfaceBorder/50">
+                <div className="text-xs text-slate-500 uppercase font-semibold mb-2">Mastery Trend</div>
+                <div className="flex items-center gap-2 text-sm text-slate-300 font-mono">
+                  {historyPoints.map((pt, i) => (
+                    <span key={i} className="flex items-center gap-2">
+                      <span className={i === historyPoints.length - 1 ? "text-indigo-400 font-bold" : ""}>{pt}%</span>
+                      {i < historyPoints.length - 1 && <span className="text-slate-600">→</span>}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Dev Mode Debug View */}
             {devMode && state && (
               <div className="mt-6 pt-4 border-t border-rose-500/30 bg-rose-500/5 p-4 rounded-xl animate-fade-in-up">
@@ -157,7 +233,8 @@ export function MyMastery() {
               </div>
             )}
           </div>
-        ))}
+        );
+        })}
       </div>
     </div>
   );

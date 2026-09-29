@@ -1,4 +1,4 @@
-import { Users, AlertOctagon, LineChart } from 'lucide-react';
+import { Users, AlertOctagon } from 'lucide-react';
 
 export function StaffClassrooms() {
   return (
@@ -28,16 +28,4 @@ export function StaffInterventions() {
   );
 }
 
-export function StaffAnalytics() {
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-fade-in-up">
-      <div className="w-20 h-20 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 mb-6">
-        <LineChart className="w-10 h-10 text-emerald-400" />
-      </div>
-      <h1 className="text-3xl font-bold text-white mb-2">Deep Analytics</h1>
-      <p className="text-slate-400 max-w-md">
-        This is a placeholder. Here, detailed graphs and reports generated from the learner models will be accessible.
-      </p>
-    </div>
-  );
-}
+

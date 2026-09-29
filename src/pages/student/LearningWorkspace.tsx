@@ -47,6 +47,9 @@ export function LearningWorkspace() {
   // AI State
   const [aiResponse, setAiResponse] = useState<AIResponse | null>(null);
   const [aiLoading, setAiLoading] = useState<AIRequestType | null>(null);
+  
+  // Teacher Override State
+  const [teacherOverrideActive, setTeacherOverrideActive] = useState(false);
 
   const concept = PYTHON_CONCEPTS.find(c => c.id === conceptId);
   const activeState = allStates.find(s => s.concept_id === conceptId);
@@ -150,6 +153,29 @@ export function LearningWorkspace() {
       recent_attempts: [attempt],
       review_candidates: []
     });
+
+    // Check for Teacher Override
+    const { data: overrides } = await supabase
+      .from('teacher_overrides')
+      .select('*')
+      .eq('student_id', user.id)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (overrides && overrides.length > 0) {
+      const activeOverride = overrides[0];
+      // Inject override into recommendation
+      nextAction.action = activeOverride.override_action as ActionType;
+      nextAction.target_concept = activeOverride.override_concept;
+      nextAction.reason = `Your teacher assigned an additional activity.`;
+      nextAction.priority = 1000; // Force to top
+      
+      // Also fetch and set a flag to show this override UI
+      setTeacherOverrideActive(true);
+    } else {
+      setTeacherOverrideActive(false);
+    }
 
     setRecommendation(nextAction);
     
@@ -425,6 +451,12 @@ export function LearningWorkspace() {
                          <h3 className="text-2xl font-bold text-white mb-2">
                            What's next: <span className="text-indigo-400">{recommendation.action.replace('_', ' ')}</span>
                          </h3>
+                         {teacherOverrideActive && (
+                           <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-xl mb-4 text-amber-200 text-sm flex items-center gap-2">
+                             <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0" />
+                             <span><strong>Teacher Override:</strong> Your educator has prioritized this step for your learning path.</span>
+                           </div>
+                         )}
                          <p className="text-slate-300 italic bg-slate-900/50 p-4 rounded-xl border border-surfaceBorder/30">
                            "{recommendation.reason}"
                          </p>
