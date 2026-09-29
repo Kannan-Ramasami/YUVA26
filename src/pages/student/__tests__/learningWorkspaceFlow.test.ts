@@ -17,6 +17,7 @@ describe('Learning Workspace Integrated Flow', () => {
     let loopsState: LearnerConceptState = {
       student_id: studentId,
       concept_id: 'c_py_loop',
+      knowledge_probability: 0.3,
       mastery_score: 30,
       confidence_score: 0.5,
       uncertainty: 0.6,
@@ -37,6 +38,7 @@ describe('Learning Workspace Integrated Flow', () => {
       {
         student_id: studentId,
         concept_id: 'c_py_cond', // Prereq for loops
+        knowledge_probability: 0.85,
         mastery_score: 85,
         confidence_score: 0.8,
         uncertainty: 0.2,
@@ -93,12 +95,13 @@ describe('Learning Workspace Integrated Flow', () => {
 
     // 4. State flows to Adaptive Decision Engine
     const stateMap = allStates.reduce((acc, s) => {
-      acc[s.concept_id] = s;
+      acc[s.concept_id] = { ...s, knowledge_probability: s.mastery_score / 100 };
       return acc;
     }, {} as Record<string, LearnerConceptState>);
 
     const nextAction = decisionEngine.getNextBestAction({
       student_id: studentId,
+      topic_id: 'sub_python',
       target_concept: 'c_py_loop',
       learning_context: 'individual',
       concept_graph: {
@@ -107,7 +110,17 @@ describe('Learning Workspace Integrated Flow', () => {
         checkPrerequisiteReadiness: conceptGraphService.checkPrerequisiteReadiness,
         getFirstWeakPrerequisite: conceptGraphService.getFirstWeakPrerequisite.bind(conceptGraphService)
       },
-      learner_states: stateMap,
+      unified_state: {
+        student_id: studentId,
+        topic_id: 'sub_python',
+        overall_level: 'BEGINNER',
+        overall_level_confidence: 0.8,
+        overall_level_model_version: 'test-1.0',
+        recent_accuracy: 0.5,
+        recent_activity_at: null,
+        learning_velocity: null,
+        concept_states: stateMap
+      },
       recent_attempts: [attempt],
       review_candidates: []
     });
@@ -118,7 +131,7 @@ describe('Learning Workspace Integrated Flow', () => {
     // Because they were struggling but got one right, they shouldn't immediately advance.
     // They probably need more practice.
     expect(nextAction.action).toBe(ActionType.PRACTICE);
-    expect(nextAction.reason).toContain('Practice c_py_loop');
+    expect(nextAction.reason).toContain('additional practice is recommended');
     
     // Complete flow verified: attempt -> mastery engine -> state -> decision engine -> recommendation
   });

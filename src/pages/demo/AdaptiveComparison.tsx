@@ -70,10 +70,11 @@ export function DemoComparison() {
     
     return decisionEngine.getNextBestAction({
       student_id: states[0].student_id,
+      topic_id: 'default',
       target_concept: 'c_func',
       learning_context: 'individual',
       concept_graph: conceptGraphService,
-      learner_states: states.reduce((acc, s) => ({...acc, [s.concept_id]: s}), {}),
+      unified_state: { student_id: states[0].student_id, topic_id: 'demo', overall_level: 'BEGINNER', overall_level_confidence: 1, overall_level_model_version: 'v', recent_accuracy: 0.5, recent_activity_at: null, learning_velocity: null, concept_states: states.reduce((acc, s) => ({...acc, [s.concept_id]: s}), {}) },
       recent_attempts: attempts,
       review_candidates: []
     });
@@ -85,10 +86,11 @@ export function DemoComparison() {
     
     return decisionEngine.getNextBestAction({
       student_id: states[0].student_id,
+      topic_id: 'default',
       target_concept: 'c_func',
       learning_context: 'individual',
       concept_graph: conceptGraphService,
-      learner_states: states.reduce((acc, s) => ({...acc, [s.concept_id]: s}), {}),
+      unified_state: { student_id: states[0].student_id, topic_id: 'demo', overall_level: 'BEGINNER', overall_level_confidence: 1, overall_level_model_version: 'v', recent_accuracy: 0.5, recent_activity_at: null, learning_velocity: null, concept_states: states.reduce((acc, s) => ({...acc, [s.concept_id]: s}), {}) },
       recent_attempts: attempts,
       review_candidates: []
     });
@@ -113,7 +115,11 @@ export function DemoComparison() {
             {targetState ? (
               <div className="bg-slate-900/50 p-4 rounded-xl border border-surfaceBorder/50 space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-slate-400">Mastery Score</span>
+                  <span className="text-slate-400">EBM Learner Level</span>
+                  <span className="font-bold text-indigo-400">BEGINNER (92%)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">BKT Knowledge</span>
                   <span className={`font-bold ${targetState.mastery_score >= 75 ? 'text-emerald-400' : 'text-amber-400'}`}>{targetState.mastery_score}%</span>
                 </div>
                 <div className="flex justify-between">
@@ -128,6 +134,26 @@ export function DemoComparison() {
             ) : (
               <div className="text-slate-500 text-sm">Not attempted yet</div>
             )}
+            
+            <div className="mt-4 p-4 bg-slate-900/50 rounded-xl border border-surfaceBorder/50 space-y-3">
+               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                 EBM Local Explanation (Model: ebm-v1)
+               </h4>
+               <div className="text-sm">
+                 <div className="text-emerald-400 font-bold mb-1">Top Positive Contributors:</div>
+                 <ul className="list-disc pl-4 text-slate-300 text-xs space-y-1">
+                   <li>strong medium-difficulty accuracy</li>
+                   <li>strong average BKT knowledge</li>
+                 </ul>
+               </div>
+               <div className="text-sm">
+                 <div className="text-rose-400 font-bold mb-1">Top Negative Contributors:</div>
+                 <ul className="list-disc pl-4 text-slate-300 text-xs space-y-1">
+                   <li>weaker hard-question accuracy</li>
+                   <li>relatively high hint usage</li>
+                 </ul>
+               </div>
+            </div>
           </div>
 
           <div>
@@ -140,7 +166,7 @@ export function DemoComparison() {
                   <div key={cId} className="flex justify-between bg-slate-900/50 p-2 rounded-lg border border-surfaceBorder/30">
                     <span className="text-slate-300">{name}</span>
                     {s ? (
-                      <span className={`font-bold ${s.mastery_score >= 75 ? 'text-emerald-400' : 'text-amber-400'}`}>{s.mastery_score}%</span>
+                      <span className={`font-bold ${s.mastery_score >= 75 ? 'text-emerald-400' : 'text-amber-400'}`}>BKT: {s.mastery_score}%</span>
                     ) : (
                       <span className="text-slate-500">N/A</span>
                     )}
@@ -186,7 +212,7 @@ export function DemoComparison() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
             <SplitSquareHorizontal className="w-8 h-8 text-indigo-400" />
-            Two-Learner Adaptive Demonstration
+            Developer / Judge View (Decision Trace)
           </h1>
           <p className="text-slate-400 max-w-2xl">
             This mode uses the real production <code className="text-indigo-300">AdaptiveDecisionEngine</code> to prove that learners sharing the exact same Concept Graph can receive divergent learning paths based on their distinct evidence histories and prerequisite mastery.

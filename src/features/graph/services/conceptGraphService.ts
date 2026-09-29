@@ -74,11 +74,15 @@ export const conceptGraphService = {
   /**
    * Traces the first missing weak prerequisite in a chain.
    */
-  getFirstWeakPrerequisite(conceptId: string, learnerStates: LearnerConceptState[]): string | null {
+  getFirstWeakPrerequisite(conceptId: string, learnerStates: Record<string, LearnerConceptState> | LearnerConceptState[]): string | null {
     const prereqs = this.getPrerequisites(conceptId);
     
+    const stateMap = Array.isArray(learnerStates)
+      ? learnerStates.reduce((acc, s) => { acc[s.concept_id] = s; return acc; }, {} as Record<string, LearnerConceptState>)
+      : learnerStates;
+
     for (const p of prereqs) {
-      const state = learnerStates.find(s => s.concept_id === p.prerequisite_concept_id);
+      const state = stateMap[p.prerequisite_concept_id];
       const mastery = state ? state.mastery_score : 0;
       
       if (mastery < p.minimum_mastery) {
@@ -94,18 +98,22 @@ export const conceptGraphService = {
   /**
    * Evaluates if a concept is ready to be learned based on the learner's estimated mastery.
    */
-  checkPrerequisiteReadiness(conceptId: string, learnerStates: LearnerConceptState[]): ReadinessResult {
-    const targetState = learnerStates.find(s => s.concept_id === conceptId);
+  checkPrerequisiteReadiness(conceptId: string, learnerStates: Record<string, LearnerConceptState> | LearnerConceptState[]): ReadinessResult {
+    const stateMap = Array.isArray(learnerStates)
+      ? learnerStates.reduce((acc, s) => { acc[s.concept_id] = s; return acc; }, {} as Record<string, LearnerConceptState>)
+      : learnerStates;
+
+    const targetState = stateMap[conceptId];
     const prereqs = this.getPrerequisites(conceptId);
     
     const evaluations: PrerequisiteEvaluation[] = prereqs.map(p => {
-      const pState = learnerStates.find(s => s.concept_id === p.prerequisite_concept_id);
-      const pConcept = PYTHON_CONCEPTS.find(c => c.id === p.prerequisite_concept_id);
+      const pState = stateMap[p.prerequisite_concept_id];
+      const pConcept = PYTHON_CONCEPTS.find(c => c.id === p.prerequisite_concept_id) || { name: p.prerequisite_concept_id.replace('concept_', '').replace(/_/g, ' ') };
       const currentMastery = pState ? pState.mastery_score : 0;
       
       return {
         prerequisiteId: p.prerequisite_concept_id,
-        prerequisiteName: pConcept?.name || 'Unknown',
+        prerequisiteName: pConcept.name,
         minimumMastery: p.minimum_mastery,
         currentMastery,
         isSatisfied: currentMastery >= p.minimum_mastery

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { PYTHON_QUESTIONS, PYTHON_CONCEPTS } from '../data/pythonDiagnostic';
 import { saveAttempt } from '../services/attemptService';
 import { completeDiagnosticSession } from '../services/diagnosticService';
 import { generateInitialLearnerState } from '../services/learnerStateService';
 import { useAuth } from '../../../contexts/AuthContext';
-import { BrainCircuit, Loader2 } from 'lucide-react';
-import type { DiagnosticAttempt } from '../types';
+import { Loader2, Sparkles } from 'lucide-react';
+import type { DiagnosticAttempt, Question } from '../types';
+import { GenerativeEducationalService } from '../../ai/services/generativeService';
 
 export function DiagnosticSession() {
   const { sessionId } = useParams();
@@ -19,34 +19,82 @@ export function DiagnosticSession() {
   const [questionStartTime, setQuestionStartTime] = useState<number>(Date.now());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [attempts, setAttempts] = useState<DiagnosticAttempt[]>([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(true);
 
-  const question = PYTHON_QUESTIONS[currentIndex];
-  const concept = PYTHON_CONCEPTS.find(c => c.id === question?.concept_id);
-  const progress = ((currentIndex) / PYTHON_QUESTIONS.length) * 100;
+  const question = questions[currentIndex];
+  const progress = questions.length > 0 ? ((currentIndex) / questions.length) * 100 : 0;
+
+  useEffect(() => {
+    async function loadQuestions() {
+      const topicName = localStorage.getItem('masteryflow_current_topic_name') || 'Python';
+      const ai = new GenerativeEducationalService();
+      try {
+        const response = await ai.generateEducationalContent('GENERATE_DIAGNOSTIC', {
+          subjectId: topicName,
+          topicName: topicName,
+          learnerState: null as any,
+          currentAction: 'ADVANCE'
+        });
+        
+        if (response.diagnosticQuestions && response.diagnosticQuestions.length > 0) {
+          setQuestions(response.diagnosticQuestions);
+        } else {
+           throw new Error("No diagnostic questions generated");
+        }
+      } catch (e) {
+        console.error("Failed to generate diagnostic", e);
+        // Fallback to basic if AI fails
+        setQuestions([{
+          id: 'fallback_1',
+          concept_id: 'fallback',
+          concept_name: 'Basic Knowledge',
+          type: 'MCQ',
+          difficulty: 'easy',
+          prompt: `What is the core idea of ${topicName}?`,
+          text: `What is the core idea of ${topicName}?`,
+          options: ['Option A', 'Option B', 'Option C', 'Option D'],
+          correct_answer: 'Option A'
+        } as any]);
+      } finally {
+        setIsLoadingQuestions(false);
+      }
+    }
+    loadQuestions();
+  }, [sessionId]);
 
   useEffect(() => {
     setQuestionStartTime(Date.now());
   }, [currentIndex]);
 
-  if (!question || !concept) return null;
+  if (!question) return null;
 
   const handleNext = async (isSkip = false) => {
     if (!user || !sessionId) return;
     
+    // ML Foundation Phase 1: Topic and Hint Tracking
+    const currentTopicId = localStorage.getItem('masteryflow_current_topic_name') || 'sub_python';
+    
     // Save evidence
     const responseTimeMs = Date.now() - questionStartTime;
     const isCorrect = isSkip ? false : (selectedAnswer === question.correct_answer);
+
+    // Calculate attempt_number to track retries properly for ML (do not overwrite)
+    const previousAttemptsForThisQuestion = attempts.filter(a => a.question_id === question.id).length;
+    const attemptNumber = previousAttemptsForThisQuestion + 1;
 
     const attempt: Omit<DiagnosticAttempt, 'id' | 'created_at'> = {
       session_id: sessionId,
       student_id: user.id,
       question_id: question.id,
       concept_id: question.concept_id,
+      topic_id: currentTopicId, // Track topic_id
       correctness: isCorrect,
       difficulty: question.difficulty,
-      response_time_ms: responseTimeMs,
+      response_time_ms: Math.max(0, responseTimeMs), // Validation
       confidence: confidence || 3, // Default to 3 if skipped
-      attempt_number: 1
+      hint_used: false, // Hints are not available in diagnostic yet, safely default to false
+      attempt_number: attemptNumber
     };
 
     const newAttempts = [...attempts, attempt];
@@ -55,7 +103,7 @@ export function DiagnosticSession() {
     // Fire and forget save to DB
     saveAttempt(attempt);
 
-    if (currentIndex < PYTHON_QUESTIONS.length - 1) {
+    if (currentIndex < questions.length - 1) {
       setCurrentIndex(prev => prev + 1);
       setSelectedAnswer('');
       setConfidence(null);
@@ -65,30 +113,38 @@ export function DiagnosticSession() {
       
       await completeDiagnosticSession(sessionId);
       
-      // Generate initial learner state
+      // Generate initial learner state & ML Prediction
       // We pass the newAttempts array in so we don't need to re-fetch from the DB
-      await generateInitialLearnerState(user.id, newAttempts);
+      const { prediction } = await generateInitialLearnerState(user.id, newAttempts, currentTopicId);
       
-      navigate(`/student/diagnostic/results/${sessionId}`, { state: { attempts: newAttempts }});
+      navigate(`/student/diagnostic/results/${sessionId}`, { state: { attempts: newAttempts, prediction, questions }});
     }
   };
 
-  if (isSubmitting) {
+  if (isSubmitting || isLoadingQuestions) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-fade-in-up">
         <Loader2 className="w-12 h-12 text-primary-500 animate-spin mb-6" />
-        <h2 className="text-2xl font-bold text-white mb-2">Analyzing your responses...</h2>
-        <p className="text-slate-400">MasteryFlow is generating your initial concept map.</p>
+        <h2 className="text-2xl font-bold text-white mb-2">
+          {isLoadingQuestions ? 'Building your diagnostic...' : 'Analyzing your responses...'}
+        </h2>
+        <p className="text-slate-400">
+          {isLoadingQuestions 
+             ? 'MasteryFlow is generating tailored questions for your topic using AI.'
+             : 'MasteryFlow is generating your initial concept map.'}
+        </p>
       </div>
     );
   }
+
+  if (!question) return null;
 
   return (
     <div className="max-w-3xl mx-auto w-full pb-20">
       {/* Header & Progress */}
       <div className="mb-8">
         <div className="flex items-center justify-between text-sm mb-4">
-          <span className="text-slate-400 font-medium">Question {currentIndex + 1} of {PYTHON_QUESTIONS.length}</span>
+          <span className="text-slate-400 font-medium">Question {currentIndex + 1} of {questions.length}</span>
           <span className="text-primary-400 font-bold">{Math.round(progress)}% Completed</span>
         </div>
         <div className="w-full h-2 bg-surfaceBorder rounded-full overflow-hidden">
@@ -103,8 +159,8 @@ export function DiagnosticSession() {
         {/* Question Metadata */}
         <div className="flex items-center justify-between mb-8 pb-6 border-b border-surfaceBorder/50">
           <div className="flex items-center gap-2 text-primary-400 bg-primary-500/10 px-3 py-1.5 rounded-lg text-sm font-bold">
-            <BrainCircuit className="w-4 h-4" />
-            {concept.name}
+            <Sparkles className="w-4 h-4" />
+            {question.metadata?.topic || 'Topic'} &mdash; {(question as any).concept_name || question.concept_id}
           </div>
           <div className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded ${
             question.difficulty === 'hard' ? 'bg-rose-500/10 text-rose-400' : 
@@ -116,7 +172,7 @@ export function DiagnosticSession() {
         </div>
 
         {/* Question Text */}
-        <h2 className="text-2xl font-bold text-white mb-8">{question.text}</h2>
+        <h2 className="text-2xl font-bold text-white mb-8">{question.prompt || question.text}</h2>
 
         {/* Answer Options */}
         {question.type === 'multiple_choice' || question.type === 'true_false' ? (
@@ -190,7 +246,7 @@ export function DiagnosticSession() {
             disabled={!selectedAnswer}
             className="bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:hover:bg-primary-600 text-white px-8 py-3 rounded-xl font-bold transition-all shadow-lg"
           >
-            {currentIndex === PYTHON_QUESTIONS.length - 1 ? 'Finish Assessment' : 'Submit & Continue'}
+            {currentIndex === questions.length - 1 ? 'Finish Assessment' : 'Submit & Continue'}
           </button>
         </div>
       </div>

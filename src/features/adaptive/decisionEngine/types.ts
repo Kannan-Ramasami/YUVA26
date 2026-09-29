@@ -1,4 +1,5 @@
 import type { LearnerConceptState, QuestionAttempt } from '../../../types/evidence';
+import type { UnifiedLearnerState } from '../../../services/unifiedLearnerModel';
 
 export const ActionType = {
   ADVANCE: 'ADVANCE' as const,
@@ -13,10 +14,11 @@ export type ActionType = typeof ActionType[keyof typeof ActionType];
 
 export interface DecisionContext {
   student_id: string;
+  topic_id: string;
   target_concept: string; // The concept they are currently on or trying to learn
   learning_context: 'individual' | 'classroom';
   concept_graph: ConceptGraphInterface;
-  learner_states: Record<string, LearnerConceptState>; // Map of conceptId -> state
+  unified_state: UnifiedLearnerState;
   recent_attempts: QuestionAttempt[];
   review_candidates: string[]; // Concepts identified by spaced review engine
   classroom_constraints?: ClassroomConstraints;
@@ -25,8 +27,8 @@ export interface DecisionContext {
 export interface ConceptGraphInterface {
   getPrerequisites: (conceptId: string) => Array<{ id: string; prerequisite_concept_id: string; minimum_mastery: number }>;
   getDependents: (conceptId: string) => Array<{ id: string; concept_id: string }>;
-  checkPrerequisiteReadiness: (conceptId: string, learnerStates: LearnerConceptState[]) => any;
-  getFirstWeakPrerequisite: (conceptId: string, learnerStates: LearnerConceptState[]) => string | null;
+  checkPrerequisiteReadiness: (conceptId: string, learnerStates: Record<string, LearnerConceptState>) => any;
+  getFirstWeakPrerequisite: (conceptId: string, learnerStates: Record<string, LearnerConceptState>) => string | null;
 }
 
 export interface ClassroomConstraints {
@@ -52,7 +54,14 @@ export interface AdaptiveAction {
 }
 
 export interface DecisionTrace extends AdaptiveAction {
-  input_state: any;
+  topic_id: string;
+  learner_level: string;
+  learner_level_confidence: number;
+  model_version: string;
+  concept_knowledge: number;
+  prerequisite_states: any;
+  recent_performance: number;
+  learning_velocity: number | null;
   policy_version: string;
   timestamp: string;
 }

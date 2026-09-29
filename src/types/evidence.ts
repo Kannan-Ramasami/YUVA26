@@ -26,6 +26,7 @@ export interface LearnerConceptState {
   student_id: string;
   concept_id: string;
   mastery_score: number; // 0 to 100
+  knowledge_probability: number; // ML Phase 2 BKT: 0.0 to 1.0 (P(Know))
   confidence_score: number;
   uncertainty: number; // 0.0 to 1.0
   attempt_count: number;
@@ -47,8 +48,10 @@ export interface MasteryChangeLog {
   id: string;
   student_id: string;
   concept_id: string;
-  previous_mastery: number;
-  new_mastery: number;
+  previous_mastery: number; // 0 to 100
+  new_mastery: number; // 0 to 100
+  previous_probability: number; // BKT P(Know)
+  new_probability: number; // BKT P(Know)
   change_amount: number;
   reason: string;
   attempt_id?: string;

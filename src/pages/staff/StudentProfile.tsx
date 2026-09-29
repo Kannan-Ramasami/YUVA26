@@ -76,10 +76,11 @@ export function StaffStudentProfile() {
         try {
           const rec = decisionEngine.getNextBestAction({
             student_id: studentId,
+            topic_id: 'default',
             target_concept: activeState.concept_id,
             learning_context: 'classroom',
             concept_graph: conceptGraphService,
-            learner_states: stateMap,
+            unified_state: { student_id: studentId, topic_id: 'default', overall_level: 'BEGINNER', overall_level_confidence: 1, overall_level_model_version: 'v', recent_accuracy: 0.5, recent_activity_at: null, learning_velocity: null, concept_states: stateMap },
             recent_attempts: [],
             review_candidates: []
           });

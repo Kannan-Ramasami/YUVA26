@@ -1,3 +1,4 @@
+import { supabase } from '../../../lib/supabase';
 import { DecisionPolicy } from './policy';
 import type { DecisionContext, AdaptiveAction, DecisionTrace } from './types';
 
@@ -29,28 +30,55 @@ export class AdaptiveDecisionEngine {
       return candidates[0];
     }
 
-    // Fallback if somehow no rule matches (shouldn't happen with Default Practice)
     throw new Error('No valid action could be determined from the decision policy.');
   }
 
   /**
    * Stores a trace of the decision for debugging and explainability.
-   * In a real app, this would persist to a database.
    */
-  public traceDecision(context: DecisionContext, action: AdaptiveAction, policyVersion: string = '1.0'): DecisionTrace {
+  public async traceDecision(context: DecisionContext, action: AdaptiveAction, policyVersion: string = '1.0'): Promise<DecisionTrace> {
+    const targetState = context.unified_state.concept_states[action.target_concept] 
+      || context.unified_state.concept_states[context.target_concept];
+      
     const trace: DecisionTrace = {
       ...action,
-      input_state: {
-        learner_state: context.learner_states[action.target_concept] || context.learner_states[context.target_concept],
-        recent_attempts_count: context.recent_attempts.length,
-        is_review_candidate: context.review_candidates?.includes(action.target_concept) || false,
-        learning_context: context.learning_context
-      },
+      topic_id: context.topic_id,
+      learner_level: context.unified_state.overall_level,
+      learner_level_confidence: context.unified_state.overall_level_confidence,
+      model_version: context.unified_state.overall_level_model_version,
+      concept_knowledge: targetState?.knowledge_probability || 0,
+      prerequisite_states: Object.fromEntries(
+        Object.entries(context.unified_state.concept_states)
+          .map(([k, v]) => [k, v.knowledge_probability])
+      ),
+      recent_performance: context.unified_state.recent_accuracy,
+      learning_velocity: context.unified_state.learning_velocity,
       policy_version: policyVersion,
       timestamp: new Date().toISOString()
     };
     
-    // TODO: Write to storage (e.g. Supabase `decision_traces` table)
+    // Persist to database (Phase 4 requirement)
+    try {
+      const { error } = await supabase.from('adaptive_decision_traces').insert({
+        decision_id: trace.decision_id,
+        student_id: trace.student_id,
+        topic_id: trace.topic_id,
+        target_concept_id: trace.target_concept,
+        action: trace.action,
+        reason: trace.reason,
+        learner_level: trace.learner_level,
+        learner_level_confidence: trace.learner_level_confidence,
+        model_version: trace.model_version,
+        concept_knowledge: trace.concept_knowledge,
+        prerequisite_states: trace.prerequisite_states,
+        recent_performance: trace.recent_performance,
+        decision_timestamp: trace.timestamp,
+        configuration_version: trace.policy_version
+      });
+      if (error) console.error('[Adaptive Engine] Failed to store decision trace:', error);
+    } catch (e) {
+      console.error('[Adaptive Engine] Trace persistence error:', e);
+    }
     
     return trace;
   }

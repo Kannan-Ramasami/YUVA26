@@ -1,11 +1,11 @@
 import { supabase } from '../../../lib/supabase';
 import type { DiagnosticSession } from '../types';
 
-export async function startDiagnosticSession(studentId: string, subjectId: string): Promise<DiagnosticSession> {
+export async function startDiagnosticSession(studentId: string, topicId: string): Promise<DiagnosticSession> {
   try {
     const { data, error } = await supabase
       .from('diagnostic_sessions')
-      .insert({ student_id: studentId, subject_id: subjectId, status: 'in_progress' })
+      .insert({ student_id: studentId, subject_id: topicId, topic_id: topicId, status: 'in_progress' })
       .select()
       .single();
     
@@ -17,7 +17,8 @@ export async function startDiagnosticSession(studentId: string, subjectId: strin
     return {
       id: 'mock-session-' + Date.now(),
       student_id: studentId,
-      subject_id: subjectId,
+      subject_id: topicId,
+      topic_id: topicId,
       status: 'in_progress',
       started_at: new Date().toISOString()
     };

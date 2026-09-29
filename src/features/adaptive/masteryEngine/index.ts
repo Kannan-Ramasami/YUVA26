@@ -1,6 +1,7 @@
 import type { LearnerConceptState, QuestionAttempt, MasteryChangeLog } from '../../../types/evidence';
 import type { MasteryStatus } from '../../diagnostic/types';
 import { MasteryConfig } from './config';
+import { processAttemptBKT } from '../../../services/bktService';
 
 export class MasteryEngine {
   /**
@@ -20,6 +21,9 @@ export class MasteryEngine {
     
     // Bound mastery
     newMastery = Math.max(MasteryConfig.MIN_MASTERY, Math.min(MasteryConfig.MAX_MASTERY, newMastery));
+    
+    // Update BKT probability
+    const bktResult = processAttemptBKT(attempt.concept_id, currentState.knowledge_probability, attempt.correctness);
     
     // Update performance arrays
     const recent_performance = [...(currentState.recent_performance || []), attempt.correctness].slice(-MasteryConfig.RECENT_PERFORMANCE_WINDOW);
@@ -45,6 +49,7 @@ export class MasteryEngine {
     const newState: LearnerConceptState = {
       ...currentState,
       mastery_score: newMastery,
+      knowledge_probability: bktResult.knowledge_probability,
       uncertainty,
       status,
       attempt_count,
@@ -180,6 +185,8 @@ export class MasteryEngine {
       concept_id: attempt.concept_id,
       previous_mastery: previousState.mastery_score,
       new_mastery: newState.mastery_score,
+      previous_probability: previousState.knowledge_probability,
+      new_probability: newState.knowledge_probability,
       change_amount: change,
       reason,
       attempt_id: attempt.id,

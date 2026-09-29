@@ -18,6 +18,7 @@ describe('ReviewService', () => {
   const createState = (overrides: Partial<LearnerConceptState>): LearnerConceptState => ({
     student_id: 's1',
     concept_id: 'c1',
+    knowledge_probability: 0.8,
     mastery_score: 80,
     confidence_score: 0.8,
     uncertainty: 0.2,
@@ -57,6 +58,7 @@ describe('ReviewService', () => {
   it('Weak prerequisite triggers remediation immediately', () => {
     const state = createState({ 
       concept_id: 'c_prereq',
+      knowledge_probability: 0.4,
       mastery_score: 40,
       last_attempt_at: new Date().toISOString() // Practiced recently, so NOT due for spaced review
     });
@@ -94,6 +96,7 @@ describe('ReviewService', () => {
     const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
     const state = createState({ 
       last_attempt_at: tenDaysAgo,
+      knowledge_probability: 0.75,
       mastery_score: 75, // Borderline (20 pts)
       uncertainty: 0.5 // (10 pts)
     });

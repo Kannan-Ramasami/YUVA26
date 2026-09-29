@@ -1,5 +1,5 @@
 export type QuestionDifficulty = 'easy' | 'medium' | 'hard';
-export type QuestionType = 'MCQ' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'CODE' | 'ORDERING' | 'multiple_choice' | 'true_false' | 'short_answer'; // Keep old types for backwards compatibility in existing mock data temporarily
+export type QuestionType = 'MCQ' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'CODE' | 'ORDERING' | 'multiple_choice' | 'true_false' | 'short_answer';
 
 export interface Concept {
   id: string;
@@ -13,9 +13,9 @@ export interface Question {
   concept_id: string;
   type: QuestionType;
   difficulty: QuestionDifficulty;
-  text?: string; // Legacy
+  text?: string;
   prompt?: string;
-  options?: string[]; // For multiple choice
+  options?: string[];
   correct_answer: string;
   explanation?: string;
   hint?: string;
@@ -27,7 +27,8 @@ export interface DiagnosticSession {
   id: string;
   student_id: string;
   subject_id: string;
-  status: 'in_progress' | 'completed';
+  topic_id?: string; // ML Foundation Phase 1
+  status: 'in_progress' | 'completed' | 'abandoned';
   started_at: string;
   completed_at?: string;
 }
@@ -38,10 +39,12 @@ export interface DiagnosticAttempt {
   student_id: string;
   question_id: string;
   concept_id: string;
+  topic_id?: string; // ML Foundation Phase 1
   correctness: boolean;
   difficulty: QuestionDifficulty;
   response_time_ms: number;
-  confidence: number; // 1 to 5
+  confidence: number;
+  hint_used: boolean; // ML Foundation Phase 1
   attempt_number: number;
   created_at?: string;
 }
@@ -52,9 +55,10 @@ export interface LearnerConceptState {
   id?: string;
   student_id: string;
   concept_id: string;
-  mastery_score: number; // 0 to 100
+  mastery_score: number;
+  knowledge_probability: number; // ML Phase 2 BKT: 0.0 to 1.0 (P(Know))
   confidence_score: number;
-  uncertainty: number; // 0.0 to 1.0
+  uncertainty: number;
   attempt_count: number;
   correct_count: number;
   status: MasteryStatus;

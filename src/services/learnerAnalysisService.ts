@@ -1,14 +1,8 @@
 import type { QuestionAttempt, LearnerConceptState, AnalysisResult } from '../types/evidence';
 import type { MasteryStatus } from '../features/diagnostic/types';
+import { recalculateConceptKnowledge, DEFAULT_BKT_CONFIG } from './bktService';
 
 export interface AnalysisConfig {
-  weights: {
-    correct: number;
-    incorrect: number;
-    hardBonus: number;
-    easyPenalty: number;
-    confidenceMultiplier: number; // Applied if confident and correct
-  };
   penalties: {
     hintUsed: number;
     rapidRetry: number;
@@ -21,13 +15,6 @@ export interface AnalysisConfig {
 }
 
 const DEFAULT_CONFIG: AnalysisConfig = {
-  weights: {
-    correct: 10,
-    incorrect: -5,
-    hardBonus: 3,
-    easyPenalty: -2,
-    confidenceMultiplier: 1.2
-  },
   penalties: {
     hintUsed: 4,
     rapidRetry: 8
@@ -35,13 +22,13 @@ const DEFAULT_CONFIG: AnalysisConfig = {
   thresholds: {
     mastered: 85,
     developing: 50,
-    rapidRetryMs: 3000 // 3 seconds is suspiciously fast for a real question
+    rapidRetryMs: 3000
   }
 };
 
 /**
- * Calculates mastery and uncertainty for a specific concept based on a stream of evidence.
- * This is a deterministic, explainable baseline mastery model.
+ * PHASE 2: Calculates BKT mastery for a specific concept based on a sequence of evidence.
+ * Integrates Bayesian Knowledge Tracing into the learner state profile.
  */
 export function calculateConceptMastery(
   conceptId: string,
@@ -50,69 +37,41 @@ export function calculateConceptMastery(
   config: AnalysisConfig = DEFAULT_CONFIG
 ): { state: LearnerConceptState, analysis: AnalysisResult } {
   
-  // Sort attempts chronologically
+  // Sort attempts chronologically to guarantee correct BKT sequence
   const sortedAttempts = [...attempts].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
   
-  let rawScore = 0;
+  // 1. Core ML Foundation Phase 2: Bayesian Knowledge Tracing Calculation
+  // We extract correctness sequentially and feed it to the standard BKT model.
+  const bktAttempts = sortedAttempts.map(a => ({ correctness: a.correctness }));
+  const knowledgeProbability = recalculateConceptKnowledge(bktAttempts, DEFAULT_BKT_CONFIG);
+  
+  // Map standard BKT probability (0.0 to 1.0) directly to the UI mastery score (0 to 100)
+  let masteryScore = Math.round(knowledgeProbability * 100);
+  
+  // Supporting calculations for risk/UI
   let correctCount = 0;
   let hintUsageCount = 0;
   let rapidRetries = 0;
   
-  // Base calculations
   sortedAttempts.forEach((attempt, index) => {
-    let attemptScore = 0;
-    
-    // 1. Correctness & Difficulty
-    if (attempt.correctness) {
-      correctCount++;
-      attemptScore += config.weights.correct;
-      if (attempt.difficulty === 'hard') attemptScore += config.weights.hardBonus;
-      if (attempt.difficulty === 'easy') attemptScore += config.weights.easyPenalty;
-      
-      // 2. Confidence Signal (if correct and confident)
-      if (attempt.confidence >= 4) {
-        attemptScore *= config.weights.confidenceMultiplier;
-      }
-    } else {
-      attemptScore += config.weights.incorrect;
-      // If they were very confident but wrong, that's a strong misconception
-      if (attempt.confidence >= 4) {
-        attemptScore -= 2; 
-      }
-    }
+    if (attempt.correctness) correctCount++;
+    if (attempt.hint_used) hintUsageCount++;
 
-    // 3. Hint Penalty
-    if (attempt.hint_used) {
-      hintUsageCount++;
-      attemptScore -= config.penalties.hintUsed;
-    }
-
-    // 4. Rapid Retry Detection (Anti-Gaming)
-    // If this attempt was very soon after the *previous* attempt on the *same question*
+    // Rapid Retry Detection (Anti-Gaming)
     if (index > 0) {
       const prev = sortedAttempts[index - 1];
       if (prev.question_id === attempt.question_id) {
         const timeDiff = new Date(attempt.timestamp).getTime() - new Date(prev.timestamp).getTime();
         if (timeDiff < config.thresholds.rapidRetryMs) {
           rapidRetries++;
-          // Penalize the score if they just guessed immediately
-          attemptScore -= config.penalties.rapidRetry;
         }
       }
     }
-
-    rawScore += attemptScore;
   });
 
-  // Normalize mastery 0-100.
-  // We assume roughly 5 perfect "medium" questions (10 pts each) to reach 50, 10 to reach 100.
-  // This is an arbitrary scaling factor for the prototype.
-  const maxExpectedScore = 100;
-  let masteryScore = Math.max(0, Math.min(100, (rawScore / maxExpectedScore) * 100));
-
-  // Uncertainty Calculation
-  // Uncertainty drops as evidence volume increases, but increases if recent answers are inconsistent
   const attemptCount = sortedAttempts.length;
+  
+  // Uncertainty drops as evidence volume increases
   let baseUncertainty = Math.max(0, 1.0 - (attemptCount * 0.1));
   
   // Recent performance (last 3 attempts)
@@ -120,15 +79,10 @@ export function calculateConceptMastery(
   const recentCorrectCount = recentAttempts.filter(a => a.correctness).length;
   const recentCorrectness = recentAttempts.length > 0 ? recentCorrectCount / recentAttempts.length : 0;
   
-  // If they have mixed recent results, uncertainty goes up
-  if (recentAttempts.length >= 3 && recentCorrectCount > 0 && recentCorrectCount < 3) {
-    baseUncertainty = Math.min(1.0, baseUncertainty + 0.2);
-  }
-  
-  // Status evaluation
+  // Status evaluation based on the pure BKT mapped score
   let status: MasteryStatus = 'NOT_ASSESSED';
   if (attemptCount === 0) status = 'NOT_ASSESSED';
-  else if (masteryScore >= config.thresholds.mastered && baseUncertainty < 0.4) status = 'MASTERED';
+  else if (masteryScore >= config.thresholds.mastered) status = 'MASTERED';
   else if (masteryScore >= config.thresholds.developing) status = 'DEVELOPING';
   else status = 'NEEDS_REMEDIATION';
 
@@ -146,10 +100,9 @@ export function calculateConceptMastery(
   if (rapidRetries > 2) riskSignals.push('Rapid guessing pattern detected');
   if (recentPerformance === 'weak') riskSignals.push('Recent performance decline');
 
-  // If mastery is technically high but recent performance is weak, downgrade to REVIEW
+  // Decay if they have a very high BKT score but suddenly bombed everything recent
   if (status === 'MASTERED' && recentPerformance === 'weak') {
     status = 'REVIEW';
-    masteryScore = Math.max(0, masteryScore - 15); // Decay
   }
 
   const lastAttempt = sortedAttempts[sortedAttempts.length - 1];
@@ -158,8 +111,9 @@ export function calculateConceptMastery(
   const state: LearnerConceptState = {
     student_id: studentId,
     concept_id: conceptId,
-    mastery_score: Math.round(masteryScore),
-    confidence_score: 0, // Could aggregate avg confidence here
+    knowledge_probability: knowledgeProbability, // Raw BKT P(Know)
+    mastery_score: masteryScore, // Mapped for UI (0-100)
+    confidence_score: 0,
     uncertainty: Number(baseUncertainty.toFixed(2)),
     attempt_count: attemptCount,
     correct_count: correctCount,
@@ -177,7 +131,7 @@ export function calculateConceptMastery(
 
   const analysis: AnalysisResult = {
     conceptId,
-    masteryScore: Math.round(masteryScore),
+    masteryScore,
     uncertainty: Number(baseUncertainty.toFixed(2)),
     status,
     evidenceSummary: {

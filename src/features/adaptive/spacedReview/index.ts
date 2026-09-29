@@ -4,7 +4,7 @@
  * Responsible for scheduling reviews of previously mastered concepts
  * to combat the forgetting curve.
  */
+import { ReviewService } from '../reviewEngine/reviewService';
 
-export class SpacedReviewEngine {
-  // TODO: Implement spaced repetition algorithms
-}
+// Expose the ReviewService as the engine for spaced review
+export const SpacedReviewEngine = new ReviewService();

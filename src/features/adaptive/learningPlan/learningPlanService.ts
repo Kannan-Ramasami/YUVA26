@@ -46,7 +46,7 @@ export class LearningPlanService {
       // Wait, the decision engine rule 'Advance Check' might return ADVANCE with the next concept.
       // If the decision is ADVANCE, it means they mastered it. We can mark the item as COMPLETED, or just not add it as an active to-do, unless we want to show completed items.
       
-      const isMastered = contextBase.learner_states[conceptId]?.status === 'MASTERED';
+      const isMastered = contextBase.unified_state.concept_states[conceptId]?.knowledge_probability >= 0.8;
       
       let itemStatus: 'PENDING' | 'COMPLETED' | 'SKIPPED' = 'PENDING';
       

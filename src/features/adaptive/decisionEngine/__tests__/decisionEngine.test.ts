@@ -9,6 +9,7 @@ describe('AdaptiveDecisionEngine', () => {
   const mockState = (overrides: Partial<LearnerConceptState>): LearnerConceptState => ({
     student_id: 's1',
     concept_id: 'c1',
+    knowledge_probability: 0.5,
     mastery_score: 50,
     confidence_score: 0.5,
     uncertainty: 0.5,
@@ -22,13 +23,14 @@ describe('AdaptiveDecisionEngine', () => {
     hint_usage_count: 0,
     status: 'DEVELOPING',
     ...overrides
-  });
+  }) as LearnerConceptState;
 
   beforeEach(() => {
     engine = new AdaptiveDecisionEngine();
     
     baseContext = {
       student_id: 's1',
+      topic_id: 'default',
       target_concept: 'c1',
       learning_context: 'individual',
       concept_graph: {
@@ -37,8 +39,18 @@ describe('AdaptiveDecisionEngine', () => {
         checkPrerequisiteReadiness: () => ({ isReady: true, status: 'AVAILABLE', blockingPrerequisites: [] }),
         getFirstWeakPrerequisite: () => null
       },
-      learner_states: {
-        'c1': mockState({})
+      unified_state: {
+        student_id: 's1',
+        topic_id: 'sub_python',
+        overall_level: 'BEGINNER',
+        overall_level_confidence: 0.8,
+        overall_level_model_version: 'test',
+        recent_accuracy: 0.5,
+        recent_activity_at: null,
+        learning_velocity: null,
+        concept_states: {
+          'c1': mockState({ knowledge_probability: 0.5 })
+        }
       },
       recent_attempts: [],
       review_candidates: []
@@ -46,7 +58,7 @@ describe('AdaptiveDecisionEngine', () => {
   });
 
   it('1. Advance when mastered', () => {
-    baseContext.learner_states['c1'] = mockState({ mastery_score: 85, status: 'MASTERED' });
+    baseContext.unified_state.concept_states['c1'] = mockState({ knowledge_probability: 0.85, attempt_count: 5, recent_correctness: 0.8 });
     const action = engine.getNextBestAction(baseContext);
     
     expect(action.action).toBe(ActionType.ADVANCE);
@@ -55,7 +67,7 @@ describe('AdaptiveDecisionEngine', () => {
   });
 
   it('2. Practice when developing', () => {
-    baseContext.learner_states['c1'] = mockState({ mastery_score: 50, status: 'DEVELOPING' });
+    baseContext.unified_state.concept_states['c1'] = mockState({ knowledge_probability: 0.50 });
     const action = engine.getNextBestAction(baseContext);
     
     expect(action.action).toBe(ActionType.PRACTICE);
@@ -64,18 +76,18 @@ describe('AdaptiveDecisionEngine', () => {
   });
 
   it('3. Review when marked as review candidate', () => {
-    baseContext.learner_states['c1'] = mockState({ mastery_score: 75, status: 'DEVELOPING' });
+    baseContext.unified_state.concept_states['c1'] = mockState({ knowledge_probability: 0.75 });
     baseContext.review_candidates = ['c1']; // It's a review candidate
     
     const action = engine.getNextBestAction(baseContext);
     expect(action.action).toBe(ActionType.REVIEW);
-    expect(action.reason).toContain('Review');
+    expect(action.reason).toContain('The learner previously demonstrated');
   });
 
   it('4. Remediate prerequisite when a weak prerequisite is found', () => {
     // Override graph mock to return a weak prerequisite
     baseContext.concept_graph.getFirstWeakPrerequisite = () => 'prereq1';
-    baseContext.learner_states['prereq1'] = mockState({ concept_id: 'prereq1', mastery_score: 20 });
+    baseContext.unified_state.concept_states['prereq1'] = mockState({ concept_id: 'prereq1', knowledge_probability: 0.20 });
     
     const action = engine.getNextBestAction(baseContext);
     expect(action.action).toBe(ActionType.REMEDIATE_PREREQUISITE);
@@ -84,8 +96,9 @@ describe('AdaptiveDecisionEngine', () => {
   });
 
   it('5. Challenge when mastered with high confidence and strong recent performance', () => {
-    baseContext.learner_states['c1'] = mockState({ 
-      mastery_score: 95, 
+    baseContext.unified_state.overall_level = 'ADVANCED';
+    baseContext.unified_state.concept_states['c1'] = mockState({ 
+      knowledge_probability: 0.95, 
       status: 'MASTERED',
       uncertainty: 0.1,
       recent_correctness: 1.0,
@@ -95,13 +108,13 @@ describe('AdaptiveDecisionEngine', () => {
     
     const action = engine.getNextBestAction(baseContext);
     expect(action.action).toBe(ActionType.CHALLENGE);
-    expect(action.reason).toContain('Challenge');
+    expect(action.reason).toContain('Recent performance is consistently strong');
   });
 
   it('6. Teacher intervention on repeated struggles', () => {
-    baseContext.learner_states['c1'] = mockState({ 
-      attempt_count: 15,
-      mastery_score: 30,
+    baseContext.unified_state.concept_states['c1'] = mockState({ 
+      attempt_count: 20,
+      knowledge_probability: 0.30,
       recent_correctness: 0.2,
       status: 'NEEDS_REMEDIATION'
     });
@@ -112,7 +125,7 @@ describe('AdaptiveDecisionEngine', () => {
 
   it('7. Weak prerequisite overrides progression (priority test)', () => {
     // State is mastered (should ADVANCE)
-    baseContext.learner_states['c1'] = mockState({ mastery_score: 85, status: 'MASTERED' });
+    baseContext.unified_state.concept_states['c1'] = mockState({ knowledge_probability: 0.85, status: 'MASTERED' });
     
     // BUT there is a weak prerequisite! (This happens if graph is updated or they decayed on prereqs)
     baseContext.concept_graph.getFirstWeakPrerequisite = () => 'prereq1';
@@ -127,30 +140,34 @@ describe('AdaptiveDecisionEngine', () => {
     // Student A: strong history, no hints, low uncertainty
     const contextA: DecisionContext = {
       ...baseContext,
-      learner_states: {
-        'c1': mockState({ 
-          mastery_score: 92, 
-          status: 'MASTERED', 
-          uncertainty: 0.1, 
-          recent_correctness: 1.0,
-          attempt_count: 10,
-          hint_usage_count: 0
-        })
+      unified_state: {
+        ...baseContext.unified_state,
+        overall_level: 'ADVANCED',
+        concept_states: {
+          'c1': mockState({ 
+            knowledge_probability: 0.92, 
+            recent_correctness: 1.0,
+            attempt_count: 10,
+            hint_usage_count: 0
+          })
+        }
       }
     };
 
     // Student B: high uncertainty, high hint usage, weak recent correctness
     const contextB: DecisionContext = {
       ...baseContext,
-      learner_states: {
-        'c1': mockState({ 
-          mastery_score: 92, 
-          status: 'MASTERED', 
-          uncertainty: 0.5, 
-          recent_correctness: 0.5, // recent struggles
-          attempt_count: 20,
-          hint_usage_count: 15 // heavy hints
-        })
+      unified_state: {
+        ...baseContext.unified_state,
+        overall_level: 'BEGINNER',
+        concept_states: {
+          'c1': mockState({ 
+            knowledge_probability: 0.92, 
+            recent_correctness: 0.5, // recent struggles
+            attempt_count: 20,
+            hint_usage_count: 15 // heavy hints
+          })
+        }
       }
     };
 
@@ -158,7 +175,7 @@ describe('AdaptiveDecisionEngine', () => {
     const actionB = engine.getNextBestAction(contextB);
 
     expect(actionA.action).toBe(ActionType.CHALLENGE);
-    expect(actionB.action).toBe(ActionType.ADVANCE); // Or practice depending on priority, but definitely NOT challenge
+    expect(actionB.action).toBe(ActionType.PRACTICE); 
     expect(actionA.action).not.toEqual(actionB.action);
   });
 

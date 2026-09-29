@@ -46,7 +46,8 @@ export function EvaluationSuite() {
       difficulty_exposure: {},
       hint_usage_count: 0,
       status: 'NOT_ASSESSED',
-      last_attempt_at: now
+      last_attempt_at: now,
+      knowledge_probability: 0.5
     });
 
     try {
@@ -81,8 +82,8 @@ export function EvaluationSuite() {
       };
 
       const t2Decision = decisionEngine.getNextBestAction({
-        student_id: 'S2', target_concept: 'c_func', learning_context: 'individual', concept_graph: conceptGraphService,
-        learner_states: t2StateMap, recent_attempts: [], review_candidates: []
+        student_id: 'S2', topic_id: 'default', target_concept: 'c_func', learning_context: 'individual', concept_graph: conceptGraphService,
+        unified_state: { student_id: 'S2', topic_id: 't', overall_level: 'BEGINNER', overall_level_confidence: 1, overall_level_model_version: 'v', recent_accuracy: 0, recent_activity_at: null, learning_velocity: null, concept_states: t2StateMap }, recent_attempts: [], review_candidates: []
       });
 
       testResults.push({
@@ -122,8 +123,8 @@ export function EvaluationSuite() {
       };
       // For decisionEngine, we need to pass a mock review_candidates array
       const t4Decision = decisionEngine.getNextBestAction({
-        student_id: 'S4', target_concept: 'c_io', learning_context: 'individual', concept_graph: conceptGraphService,
-        learner_states: t4StateMap, recent_attempts: [], 
+        student_id: 'S4', topic_id: 'default', target_concept: 'c_io', learning_context: 'individual', concept_graph: conceptGraphService,
+        unified_state: { student_id: 'S4', topic_id: 't', overall_level: 'BEGINNER', overall_level_confidence: 1, overall_level_model_version: 'v', recent_accuracy: 0, recent_activity_at: null, learning_velocity: null, concept_states: t4StateMap }, recent_attempts: [], 
         review_candidates: ['c_var']
       });
 
@@ -166,8 +167,8 @@ export function EvaluationSuite() {
         'c_func': t6StateVolatile, 'c_loop': { ...getInitialState('c_loop'), mastery_score: 100, status: 'MASTERED' }, 'c_cond': { ...getInitialState('c_cond'), mastery_score: 100, status: 'MASTERED' }
       };
 
-      const decStable = decisionEngine.getNextBestAction({ student_id: 'S6A', target_concept: 'c_func', learning_context: 'individual', concept_graph: conceptGraphService, learner_states: t6StableMap, recent_attempts: [], review_candidates: [] });
-      const decVolatile = decisionEngine.getNextBestAction({ student_id: 'S6B', target_concept: 'c_func', learning_context: 'individual', concept_graph: conceptGraphService, learner_states: t6VolatileMap, recent_attempts: [], review_candidates: [] });
+      const decStable = decisionEngine.getNextBestAction({ student_id: 'S6A', topic_id: 'default', target_concept: 'c_func', learning_context: 'individual', concept_graph: conceptGraphService, unified_state: { student_id: 'S6A', topic_id: 't', overall_level: 'BEGINNER', overall_level_confidence: 1, overall_level_model_version: 'v', recent_accuracy: 0, recent_activity_at: null, learning_velocity: null, concept_states: t6StableMap }, recent_attempts: [], review_candidates: [] });
+      const decVolatile = decisionEngine.getNextBestAction({ student_id: 'S6B', topic_id: 'default', target_concept: 'c_func', learning_context: 'individual', concept_graph: conceptGraphService, unified_state: { student_id: 'S6B', topic_id: 't', overall_level: 'BEGINNER', overall_level_confidence: 1, overall_level_model_version: 'v', recent_accuracy: 0, recent_activity_at: null, learning_velocity: null, concept_states: t6VolatileMap }, recent_attempts: [], review_candidates: [] });
 
       testResults.push({
         id: 'T6',
@@ -183,8 +184,8 @@ export function EvaluationSuite() {
       // --------------------------------------------------
       // For this test, we verify the deterministic engine throws no async errors and handles synchronous fallbacks gracefully.
       const t7Decision = decisionEngine.getNextBestAction({
-        student_id: 'S7', target_concept: 'unknown_concept_missing_from_graph', learning_context: 'individual', 
-        concept_graph: conceptGraphService, learner_states: {}, recent_attempts: [], review_candidates: []
+        student_id: 'S7', topic_id: 'default', target_concept: 'unknown_concept_missing_from_graph', learning_context: 'individual', 
+        concept_graph: conceptGraphService, unified_state: { student_id: 'S7', topic_id: 't', overall_level: 'BEGINNER', overall_level_confidence: 1, overall_level_model_version: 'v', recent_accuracy: 0, recent_activity_at: null, learning_velocity: null, concept_states: {} }, recent_attempts: [], review_candidates: []
       });
 
       testResults.push({
@@ -245,6 +246,12 @@ export function EvaluationSuite() {
                   {totalCount > 0 ? `${Math.round((passedCount / totalCount) * 100)}%` : '--'}
                 </div>
               </div>
+              <Link
+                to="/demo/adaptive"
+                className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all border border-surfaceBorder"
+              >
+                Open Developer View
+              </Link>
               <button 
                 onClick={runTests}
                 disabled={running}

@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { supabase } from '../../../lib/supabase';
-import { Play, CheckCircle2, TrendingUp, AlertTriangle, User, BookOpen, BrainCircuit, Lock } from 'lucide-react';
-import type { LearnerConceptState } from '../types';
-import { PYTHON_CONCEPTS } from '../data/pythonDiagnostic';
+import { Play, CheckCircle2, TrendingUp, Lock, User, BookOpen, BrainCircuit } from 'lucide-react';
+import type { LearnerConceptState, Question } from '../types';
+import type { MLPredictionResponse } from '../../../services/mlPredictionService';
 
 export function DiagnosticResult() {
   const { sessionId } = useParams();
   const { user } = useAuth();
+  const location = useLocation();
   const [learnerStates, setLearnerStates] = useState<LearnerConceptState[]>([]);
   const [loading, setLoading] = useState(true);
 
   const topicName = localStorage.getItem('masteryflow_current_topic_name') || 'Python Programming';
+  
+  // Phase 3: Access EBM prediction from routing state
+  const prediction = location.state?.prediction as MLPredictionResponse | null;
+  const questions = location.state?.questions as Question[] | undefined;
 
   useEffect(() => {
     if (!user) return;
@@ -47,8 +52,12 @@ export function DiagnosticResult() {
     );
   }
 
-  // Combine fetched state with standard concepts
-  const displayConcepts = PYTHON_CONCEPTS.map(concept => {
+  // Combine fetched state with dynamically discovered concepts from the diagnostic
+  const extractedConcepts = questions ? Array.from(new Map(questions.map(q => 
+    [q.concept_id, { id: q.concept_id, name: (q as any).concept_name || q.concept_id }]
+  )).values()) : learnerStates.map(ls => ({ id: ls.concept_id, name: ls.concept_id.replace('concept_', '').replace(/_/g, ' ') }));
+
+  const displayConcepts = extractedConcepts.map(concept => {
     const state = learnerStates.find(s => s.concept_id === concept.id);
     return {
       name: concept.name,
@@ -57,20 +66,21 @@ export function DiagnosticResult() {
     };
   });
 
-  // Level Estimation
+  // Level Estimation (Fallback to basic mapping if ML is offline)
   const avgScore = displayConcepts.length > 0 
     ? displayConcepts.reduce((acc, c) => acc + c.score, 0) / displayConcepts.length 
     : 0;
 
-  let level = 'BEGINNER';
+  let level = prediction?.level || 'BEGINNER';
   let levelDesc = 'You are just starting out. We will build a strong foundation first.';
-  if (avgScore > 75) {
+  
+  if (level === 'ADVANCED' || (!prediction && avgScore > 75)) {
     level = 'ADVANCED';
     levelDesc = 'You have excellent mastery. We will focus on advanced application and optimization.';
-  } else if (avgScore > 40) {
+  } else if (level === 'INTERMEDIATE' || (!prediction && avgScore > 40)) {
     level = 'INTERMEDIATE';
     levelDesc = 'Based on your diagnostic performance, you already understand the fundamentals. We\'ll focus on strengthening application and problem-solving skills.';
-  } else if (avgScore > 15) {
+  } else if (level === 'FOUNDATION' || (!prediction && avgScore > 15)) {
     level = 'FOUNDATION';
     levelDesc = 'You have some foundational knowledge. We will reinforce core concepts before moving to complex topics.';
   }
@@ -115,9 +125,19 @@ export function DiagnosticResult() {
           {/* Left Column: Level & Recommendation */}
           <div>
             <div className="mb-10">
-              <h2 className="text-slate-400 text-sm font-bold uppercase tracking-wider mb-2">Current Level</h2>
-              <div className="text-3xl font-bold text-white mb-4">{level}</div>
-              <p className="text-slate-300 leading-relaxed">{levelDesc}</p>
+              <h2 className="text-slate-400 text-sm font-bold uppercase tracking-wider mb-2">Estimated Learning Level</h2>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="text-3xl font-bold text-white">{level}</div>
+                {prediction && (
+                  <div className="text-xs bg-indigo-500/20 text-indigo-300 px-3 py-1 rounded-full border border-indigo-500/30 font-medium">
+                    Confidence: {Math.round(prediction.confidence * 100)}%
+                  </div>
+                )}
+              </div>
+              <p className="text-slate-300 leading-relaxed text-sm mb-2">{levelDesc}</p>
+              {prediction && (
+                <p className="text-xs text-slate-500 italic">Based on your recent diagnostic evidence and concept knowledge (Model: {prediction.model_version})</p>
+              )}
             </div>
 
             <div className="bg-primary-500/10 border border-primary-500/20 p-6 rounded-2xl">

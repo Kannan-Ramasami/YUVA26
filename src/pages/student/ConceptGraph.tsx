@@ -89,6 +89,7 @@ export function ConceptGraph() {
       'python_101',
       {
         student_id: user.id,
+        topic_id: 'default',
         learning_context: 'individual',
         concept_graph: {
           getPrerequisites: conceptGraphService.getPrerequisites,
@@ -96,7 +97,7 @@ export function ConceptGraph() {
           checkPrerequisiteReadiness: conceptGraphService.checkPrerequisiteReadiness,
           getFirstWeakPrerequisite: conceptGraphService.getFirstWeakPrerequisite.bind(conceptGraphService)
         },
-        learner_states: stateMap,
+        unified_state: { student_id: user.id, topic_id: 'default', overall_level: 'BEGINNER', overall_level_confidence: 1, overall_level_model_version: 'v', recent_accuracy: 0.5, recent_activity_at: null, learning_velocity: null, concept_states: stateMap },
         recent_attempts: [],
         review_candidates: []
       },

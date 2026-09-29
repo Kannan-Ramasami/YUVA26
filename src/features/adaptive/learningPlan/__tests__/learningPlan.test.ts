@@ -12,6 +12,7 @@ describe('LearningPlanService', () => {
   const mockState = (overrides: Partial<LearnerConceptState>): LearnerConceptState => ({
     student_id: 's1',
     concept_id: 'c1',
+    knowledge_probability: 0.5,
     mastery_score: 50,
     confidence_score: 0.5,
     uncertainty: 0.5,
@@ -25,12 +26,13 @@ describe('LearningPlanService', () => {
     hint_usage_count: 0,
     status: 'DEVELOPING',
     ...overrides
-  });
+  }) as LearnerConceptState;
 
   beforeEach(() => {
     service = new LearningPlanService();
     baseContext = {
       student_id: 's1',
+      topic_id: 'python_101',
       learning_context: 'individual',
       concept_graph: {
         getPrerequisites: () => [],
@@ -38,11 +40,21 @@ describe('LearningPlanService', () => {
         checkPrerequisiteReadiness: () => ({ isReady: true, status: 'AVAILABLE', blockingPrerequisites: [] }),
         getFirstWeakPrerequisite: () => null
       },
-      learner_states: {
-        'c_py_var': mockState({ concept_id: 'c_py_var', mastery_score: 85, status: 'MASTERED' }),
-        'c_py_type': mockState({ concept_id: 'c_py_type', mastery_score: 50, status: 'DEVELOPING' }),
-        'c_py_oper': mockState({ concept_id: 'c_py_oper', mastery_score: 0, status: 'NOT_ASSESSED', attempt_count: 0 }),
-        'c_py_loop': mockState({ concept_id: 'c_py_loop', mastery_score: 0, status: 'NOT_ASSESSED', attempt_count: 0 }),
+      unified_state: {
+        student_id: 's1',
+        topic_id: 'python_101',
+        overall_level: 'BEGINNER',
+        overall_level_confidence: 0.8,
+        overall_level_model_version: 'test-1.0',
+        recent_accuracy: 0.6,
+        recent_activity_at: null,
+        learning_velocity: null,
+        concept_states: {
+          'c_py_var': mockState({ concept_id: 'c_py_var', knowledge_probability: 0.85, attempt_count: 5, recent_correctness: 0.8 }),
+          'c_py_type': mockState({ concept_id: 'c_py_type', knowledge_probability: 0.50, attempt_count: 5 }),
+          'c_py_oper': mockState({ concept_id: 'c_py_oper', knowledge_probability: 0.0, attempt_count: 0 }),
+          'c_py_loop': mockState({ concept_id: 'c_py_loop', knowledge_probability: 0.0, attempt_count: 0 }),
+        }
       },
       recent_attempts: [],
       review_candidates: []
@@ -55,11 +67,14 @@ describe('LearningPlanService', () => {
     // Create a context for Learner B with different states
     const contextB = {
       ...baseContext,
-      learner_states: {
-        'c_py_var': mockState({ concept_id: 'c_py_var', mastery_score: 50, status: 'DEVELOPING' }),
-        'c_py_type': mockState({ concept_id: 'c_py_type', mastery_score: 85, status: 'MASTERED' }),
-        'c_py_oper': mockState({ concept_id: 'c_py_oper', mastery_score: 85, status: 'MASTERED' }),
-        'c_py_loop': mockState({ concept_id: 'c_py_loop', mastery_score: 85, status: 'MASTERED' }),
+      unified_state: {
+        ...baseContext.unified_state,
+        concept_states: {
+          'c_py_var': mockState({ concept_id: 'c_py_var', knowledge_probability: 0.5 }),
+          'c_py_type': mockState({ concept_id: 'c_py_type', knowledge_probability: 0.85, attempt_count: 5, recent_correctness: 0.9 }),
+          'c_py_oper': mockState({ concept_id: 'c_py_oper', knowledge_probability: 0.85, attempt_count: 5, recent_correctness: 0.9 }),
+          'c_py_loop': mockState({ concept_id: 'c_py_loop', knowledge_probability: 0.85, attempt_count: 5, recent_correctness: 0.9 }),
+        }
       }
     };
     const { items: planBItems } = service.generatePlan('s2', 'python_101', contextB, allConcepts);
@@ -97,9 +112,12 @@ describe('LearningPlanService', () => {
     // Simulate new evidence (student mastered c_py_type)
     const newContext = {
       ...baseContext,
-      learner_states: {
-        ...baseContext.learner_states,
-        'c_py_type': mockState({ concept_id: 'c_py_type', mastery_score: 95, status: 'MASTERED', recent_correctness: 1.0 })
+      unified_state: {
+        ...baseContext.unified_state,
+        concept_states: {
+          ...baseContext.unified_state.concept_states,
+          'c_py_type': mockState({ concept_id: 'c_py_type', knowledge_probability: 0.95, attempt_count: 5, recent_correctness: 1.0 })
+        }
       }
     };
     

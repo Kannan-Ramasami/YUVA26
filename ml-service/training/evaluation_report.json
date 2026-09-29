@@ -1,0 +1,64 @@
+{
+  "metrics": {
+    "accuracy": 0.985,
+    "precision_macro": 0.9828513248788535,
+    "recall_macro": 0.98728094968909,
+    "f1_score_macro": 0.9848974339154359
+  },
+  "confusion_matrix": {
+    "labels": [
+      "ADVANCED",
+      "BEGINNER",
+      "FOUNDATION",
+      "INTERMEDIATE"
+    ],
+    "matrix": [
+      [
+        29,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        52,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        56,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        60
+      ]
+    ]
+  },
+  "feature_importances": {
+    "minimum_bkt_knowledge": 0.16146776943161772,
+    "average_bkt_knowledge": 0.13219630503806581,
+    "maximum_bkt_knowledge": 0.11538873456797381,
+    "average_attempts": 0.09888027075140282,
+    "medium_accuracy": 0.08376552898634435,
+    "overall_accuracy": 0.08148917389166882,
+    "hard_accuracy": 0.07657019006443827,
+    "easy_accuracy": 0.07401192907645315,
+    "hint_usage_rate": 0.04316087069600452,
+    "median_response_time": 0.038338670849100885,
+    "diagnostic_accuracy": 0.035958240093791616,
+    "prerequisite_mastery": 0.022815042096860933,
+    "average_response_time": 0.021423969256148787,
+    "recent_accuracy": 0.007981818454739324,
+    "knowledge_variance": 0.0024144976800115066,
+    "recent_bkt_change": 0.001867908740623804,
+    "question_count": 0.0013048013844400932,
+    "concept_count": 0.0009642789403137406,
+    "diagnostic_question_count": 0.0
+  },
+  "dataset_warning": "This accuracy reflects performance on a SYNTHETIC/CURATED prototype dataset. It does not represent real-world student accuracy."
+}

@@ -7,6 +7,7 @@ import { PYTHON_CONCEPTS, PYTHON_QUESTIONS } from '../../features/diagnostic/dat
 import { MasteryEngine } from '../../features/adaptive/masteryEngine';
 import { AdaptiveDecisionEngine } from '../../features/adaptive/decisionEngine';
 import { QuestionSelectionEngine } from '../../features/adaptive/practiceEngine';
+import { ReviewService } from '../../features/adaptive/reviewEngine/reviewService';
 import { conceptGraphService } from '../../features/graph/services/conceptGraphService';
 import { ActionType } from '../../features/adaptive/decisionEngine/types';
 import { GenerativeEducationalService } from '../../features/ai/services/generativeService';
@@ -14,10 +15,12 @@ import type { AIRequestType, AIResponse } from '../../features/ai/services/gener
 import type { LearnerConceptState, QuestionAttempt, LearningSession } from '../../types/evidence';
 import type { Question } from '../../features/diagnostic/types';
 import type { AdaptiveAction } from '../../features/adaptive/decisionEngine/types';
+import { getLearnerState } from '../../services/unifiedLearnerModel';
 
 const masteryEngine = new MasteryEngine();
 const decisionEngine = new AdaptiveDecisionEngine();
 const questionEngine = new QuestionSelectionEngine();
+const reviewService = new ReviewService();
 const aiService = new GenerativeEducationalService();
 
 export function LearningWorkspace() {
@@ -129,30 +132,31 @@ export function LearningWorkspace() {
     // 2. Mastery Engine updates learner state
     const { newState } = masteryEngine.updateMastery(activeState, attempt);
     
-    // Update local states array so decision engine has latest
+    // Update local states array so decision engine has latest (mainly for UI display sync)
     const updatedStates = allStates.map(s => s.concept_id === conceptId ? newState : s);
     setAllStates(updatedStates);
     
-    // 3. Adaptive Decision Engine calculates Next Action
-    const stateMap = updatedStates.reduce((acc, state) => {
-      acc[state.concept_id] = state;
-      return acc;
-    }, {} as Record<string, LearnerConceptState>);
+    // 3. Adaptive Decision Engine calculates Next Action (Phase 4)
+    // Wait for the ML predictions and BKT to be built into a unified state
+    const unifiedState = await getLearnerState(user.id, 'sub_python');
 
-    const nextAction = decisionEngine.getNextBestAction({
+    const decisionContext = {
       student_id: user.id,
+      topic_id: 'sub_python',
       target_concept: conceptId!,
-      learning_context: 'individual',
+      learning_context: 'individual' as const,
       concept_graph: {
         getPrerequisites: conceptGraphService.getPrerequisites,
         getDependents: conceptGraphService.getDependents,
         checkPrerequisiteReadiness: conceptGraphService.checkPrerequisiteReadiness,
         getFirstWeakPrerequisite: conceptGraphService.getFirstWeakPrerequisite.bind(conceptGraphService)
       },
-      learner_states: stateMap,
+      unified_state: unifiedState,
       recent_attempts: [attempt],
-      review_candidates: []
-    });
+      review_candidates: reviewService.getReviewCandidates(updatedStates, conceptId, conceptGraphService).map(c => c.conceptId)
+    };
+
+    const nextAction = decisionEngine.getNextBestAction(decisionContext);
 
     // Check for Teacher Override
     const { data: overrides } = await supabase
@@ -170,14 +174,14 @@ export function LearningWorkspace() {
       nextAction.target_concept = activeOverride.override_concept;
       nextAction.reason = `Your teacher assigned an additional activity.`;
       nextAction.priority = 1000; // Force to top
-      
-      // Also fetch and set a flag to show this override UI
       setTeacherOverrideActive(true);
     } else {
       setTeacherOverrideActive(false);
     }
 
-    setRecommendation(nextAction);
+    // Phase 4: Generate and persist decision trace
+    const decisionTrace = await decisionEngine.traceDecision(decisionContext, nextAction, '4.0');
+    setRecommendation(decisionTrace);
     
     // 4. Update Supabase asynchronously
     await supabase.from('learner_concept_states').upsert(newState, { onConflict: 'student_id,concept_id' });
@@ -193,7 +197,8 @@ export function LearningWorkspace() {
       learnerState: activeState,
       currentAction: recommendation?.action || ActionType.PRACTICE,
       currentQuestion: currentQuestion || undefined,
-      selectedAnswer: selectedOption || undefined
+      selectedAnswer: selectedOption || undefined,
+      learnerLevel: (recommendation as any)?.learner_level || undefined
     });
     
     setAiLoading(null);

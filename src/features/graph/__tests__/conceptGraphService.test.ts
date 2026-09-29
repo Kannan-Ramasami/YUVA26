@@ -8,6 +8,7 @@ describe('Concept Graph Service', () => {
   const createMockState = (conceptId: string, masteryScore: number): LearnerConceptState => ({
     student_id: 's1',
     concept_id: conceptId,
+    knowledge_probability: masteryScore / 100,
     mastery_score: masteryScore,
     confidence_score: 0,
     uncertainty: 0,

@@ -18,6 +18,7 @@ describe('QuestionSelectionEngine', () => {
   const mockState = (overrides: Partial<LearnerConceptState>): LearnerConceptState => ({
     student_id: 's1',
     concept_id: 'c1',
+    knowledge_probability: 0.5,
     mastery_score: 50,
     confidence_score: 0.5,
     uncertainty: 0.5,

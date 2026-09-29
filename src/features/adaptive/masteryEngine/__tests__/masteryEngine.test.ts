@@ -13,6 +13,7 @@ describe('MasteryEngine', () => {
     baseState = {
       student_id: 'student1',
       concept_id: 'concept1',
+      knowledge_probability: 0.5,
       mastery_score: 50,
       confidence_score: 0.5,
       uncertainty: 0.8,

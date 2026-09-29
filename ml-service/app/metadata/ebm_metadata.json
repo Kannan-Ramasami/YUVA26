@@ -1,0 +1,31 @@
+{
+  "model_version": "ebm-v1",
+  "feature_schema_version": "features-v1",
+  "classes": [
+    "ADVANCED",
+    "BEGINNER",
+    "FOUNDATION",
+    "INTERMEDIATE"
+  ],
+  "feature_names": [
+    "overall_accuracy",
+    "easy_accuracy",
+    "medium_accuracy",
+    "hard_accuracy",
+    "average_response_time",
+    "median_response_time",
+    "average_attempts",
+    "hint_usage_rate",
+    "recent_accuracy",
+    "question_count",
+    "concept_count",
+    "average_bkt_knowledge",
+    "minimum_bkt_knowledge",
+    "maximum_bkt_knowledge",
+    "prerequisite_mastery",
+    "knowledge_variance",
+    "recent_bkt_change",
+    "diagnostic_accuracy",
+    "diagnostic_question_count"
+  ]
+}
