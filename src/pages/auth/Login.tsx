@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { LogIn, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
@@ -19,13 +19,16 @@ export function Login({ role }: LoginProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // If already logged in, redirect away
-  if (user && profile) {
-    navigate(`/${profile.role}/dashboard`, { replace: true });
-    return null;
-  }
-
-  const from = (location.state as any)?.from?.pathname || `/${role}/dashboard`;
+  useEffect(() => {
+    if (user && profile) {
+      const defaultDashboard = `/${profile.role}/dashboard`;
+      const from = (location.state as any)?.from?.pathname || defaultDashboard;
+      navigate(from, { replace: true });
+    } else if (user && !profile) {
+      // If user is authenticated but profile is missing, it's likely a database schema issue
+      setError('Profile could not be loaded. Please ensure the Supabase schema (supabase_setup.sql) has been run.');
+    }
+  }, [user, profile, navigate, location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,8 +44,7 @@ export function Login({ role }: LoginProps) {
       if (signInError) throw signInError;
       
       // AuthContext will handle profile fetching. 
-      // The ProtectedRoute or the effect above will naturally redirect them once profile is loaded.
-      navigate(from, { replace: true });
+      // The useEffect above will naturally redirect them once profile is loaded.
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
     } finally {
