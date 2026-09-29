@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Sparkles, BookOpen, Network, RefreshCw, Users, User, LogOut, Map } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { BackButton } from '../components/BackButton';
 
 export function StudentLayout() {
   const { profile, signOut } = useAuth();
@@ -26,14 +27,17 @@ export function StudentLayout() {
 
       <header className="sticky top-0 z-50 glass-panel border-b border-surfaceBorder/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="bg-primary-500/10 p-2 rounded-xl group-hover:bg-primary-500/20 transition-colors border border-primary-500/20">
-              <Sparkles className="w-6 h-6 text-primary-400" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-white group-hover:text-primary-100 transition-colors hidden sm:block">
-              MasteryFlow
-            </span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <BackButton />
+            <Link to="/" className="flex items-center gap-3 group ml-2">
+              <div className="bg-primary-500/10 p-2 rounded-xl group-hover:bg-primary-500/20 transition-colors border border-primary-500/20">
+                <Sparkles className="w-6 h-6 text-primary-400" />
+              </div>
+              <span className="text-xl font-bold tracking-tight text-white group-hover:text-primary-100 transition-colors hidden sm:block">
+                MasteryFlow
+              </span>
+            </Link>
+          </div>
           
           <nav className="hidden md:flex gap-2">
             {navItems.map((item) => {

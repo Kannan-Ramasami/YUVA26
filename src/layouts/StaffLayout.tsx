@@ -1,6 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Sparkles, LayoutDashboard, Users, AlertOctagon, LineChart, User, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { BackButton } from '../components/BackButton';
 
 export function StaffLayout() {
   const { profile, signOut } = useAuth();
@@ -26,14 +27,17 @@ export function StaffLayout() {
 
       <header className="sticky top-0 z-50 glass-panel border-b border-surfaceBorder/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="bg-indigo-500/10 p-2 rounded-xl group-hover:bg-indigo-500/20 transition-colors border border-indigo-500/20">
-              <Sparkles className="w-6 h-6 text-indigo-400" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-white group-hover:text-indigo-100 transition-colors hidden sm:block">
-              MasteryFlow Mentor
-            </span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <BackButton />
+            <Link to="/" className="flex items-center gap-3 group ml-2">
+              <div className="bg-indigo-500/10 p-2 rounded-xl group-hover:bg-indigo-500/20 transition-colors border border-indigo-500/20">
+                <Sparkles className="w-6 h-6 text-indigo-400" />
+              </div>
+              <span className="text-xl font-bold tracking-tight text-white group-hover:text-indigo-100 transition-colors hidden sm:block">
+                MasteryFlow Mentor
+              </span>
+            </Link>
+          </div>
           
           <nav className="hidden md:flex gap-2">
             {navItems.map((item) => {

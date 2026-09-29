@@ -42,6 +42,9 @@ export default {
         'blob': 'blob 7s infinite',
         'fade-in-up': 'fadeInUp 0.8s ease-out forwards',
         'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'float': 'float 3s ease-in-out infinite',
+        'float-slow': 'float 4s ease-in-out infinite',
+        'float-slower': 'float 5s ease-in-out infinite',
       },
       keyframes: {
         blob: {
@@ -57,6 +60,10 @@ export default {
         pulseGlow: {
           '0%, 100%': { opacity: '1', filter: 'drop-shadow(0 0 10px rgba(139, 92, 246, 0.5))' },
           '50%': { opacity: '.7', filter: 'drop-shadow(0 0 20px rgba(139, 92, 246, 0.8))' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
         }
       }
     },
