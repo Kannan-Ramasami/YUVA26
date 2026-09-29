@@ -17,6 +17,7 @@ import { DiagnosticSession } from './features/diagnostic/pages/DiagnosticSession
 import { DiagnosticResult } from './features/diagnostic/pages/DiagnosticResult';
 import { MyMastery } from './pages/student/MyMastery';
 import { LearningPlan } from './pages/student/LearningPlan';
+import { ReviewCenter } from './pages/student/ReviewCenter';
 import { LearningWorkspace } from './pages/student/LearningWorkspace';
 import { ConceptGraph as StudentConceptGraph } from './pages/student/ConceptGraph';
 import { StaffConceptGraph } from './pages/staff/ConceptGraph';
@@ -54,6 +55,7 @@ function App() {
               <Route path="student/profile" element={<MyMastery />} />
               <Route path="student/learning-plan" element={<LearningPlan />} />
               <Route path="student/learning-path" element={<StudentConceptGraph />} />
+              <Route path="student/review" element={<ReviewCenter />} />
               <Route path="student/classrooms" element={<StudentClassrooms />} />
               <Route path="student/classrooms/:id" element={<StudentClassroomDetail />} />
               <Route path="student/classroom/join" element={<JoinClassroom />} />

@@ -17,21 +17,24 @@ export const PYTHON_QUESTIONS: Question[] = [
   {
     id: 'q_py_var_1',
     concept_id: 'c_py_var',
-    type: 'multiple_choice',
+    type: 'MCQ',
     difficulty: 'easy',
-    text: 'Which of the following is a valid variable assignment in Python?',
+    prompt: 'Which of the following is a valid variable assignment in Python?',
     options: ['x == 5', '5 = x', 'x = 5', 'let x = 5'],
-    correct_answer: 'x = 5'
+    correct_answer: 'x = 5',
+    explanation: 'In Python, variables are assigned using a single equals sign (=) with the variable name on the left and the value on the right.',
+    hint: 'Think about which side the name should be on.'
   },
   // Data Types
   {
     id: 'q_py_type_1',
     concept_id: 'c_py_type',
-    type: 'multiple_choice',
+    type: 'MCQ',
     difficulty: 'easy',
-    text: 'What is the data type of the value 3.14?',
+    prompt: 'What is the data type of the value 3.14?',
     options: ['int', 'float', 'string', 'boolean'],
-    correct_answer: 'float'
+    correct_answer: 'float',
+    explanation: 'Any number with a decimal point is represented as a float (floating-point number) in Python.'
   },
   // Operators
   {

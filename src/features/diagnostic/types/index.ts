@@ -1,5 +1,5 @@
 export type QuestionDifficulty = 'easy' | 'medium' | 'hard';
-export type QuestionType = 'multiple_choice' | 'true_false' | 'short_answer';
+export type QuestionType = 'MCQ' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'CODE' | 'ORDERING' | 'multiple_choice' | 'true_false' | 'short_answer'; // Keep old types for backwards compatibility in existing mock data temporarily
 
 export interface Concept {
   id: string;
@@ -13,9 +13,14 @@ export interface Question {
   concept_id: string;
   type: QuestionType;
   difficulty: QuestionDifficulty;
-  text: string;
+  text?: string; // Legacy
+  prompt?: string;
   options?: string[]; // For multiple choice
   correct_answer: string;
+  explanation?: string;
+  hint?: string;
+  metadata?: Record<string, any>;
+  created_at?: string;
 }
 
 export interface DiagnosticSession {

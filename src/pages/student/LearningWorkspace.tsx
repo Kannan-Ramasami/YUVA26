@@ -6,13 +6,19 @@ import { ArrowLeft, BookOpen, Terminal, CheckCircle2, AlertCircle, Lightbulb, Fa
 import { PYTHON_CONCEPTS, PYTHON_QUESTIONS } from '../../features/diagnostic/data/pythonDiagnostic';
 import { MasteryEngine } from '../../features/adaptive/masteryEngine';
 import { AdaptiveDecisionEngine } from '../../features/adaptive/decisionEngine';
+import { QuestionSelectionEngine } from '../../features/adaptive/practiceEngine';
 import { conceptGraphService } from '../../features/graph/services/conceptGraphService';
+import { ActionType } from '../../features/adaptive/decisionEngine/types';
+import { GenerativeEducationalService } from '../../features/ai/services/generativeService';
+import type { AIRequestType, AIResponse } from '../../features/ai/services/generativeService';
 import type { LearnerConceptState, QuestionAttempt, LearningSession } from '../../types/evidence';
 import type { Question } from '../../features/diagnostic/types';
 import type { AdaptiveAction } from '../../features/adaptive/decisionEngine/types';
 
 const masteryEngine = new MasteryEngine();
 const decisionEngine = new AdaptiveDecisionEngine();
+const questionEngine = new QuestionSelectionEngine();
+const aiService = new GenerativeEducationalService();
 
 export function LearningWorkspace() {
   const { conceptId } = useParams<{ conceptId: string }>();
@@ -27,7 +33,8 @@ export function LearningWorkspace() {
   
   // Local active question
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
+  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [attemptedQuestionIds, setAttemptedQuestionIds] = useState<Set<string>>(new Set());
   
   // Attempt UI
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
@@ -37,6 +44,10 @@ export function LearningWorkspace() {
   // Post-attempt engine output
   const [recommendation, setRecommendation] = useState<AdaptiveAction | null>(null);
   
+  // AI State
+  const [aiResponse, setAiResponse] = useState<AIResponse | null>(null);
+  const [aiLoading, setAiLoading] = useState<AIRequestType | null>(null);
+
   const concept = PYTHON_CONCEPTS.find(c => c.id === conceptId);
   const activeState = allStates.find(s => s.concept_id === conceptId);
 
@@ -65,6 +76,19 @@ export function LearningWorkspace() {
         learning_mode: 'individual'
       });
       
+      
+      // Select first question
+      const targetState = data?.find(s => s.concept_id === conceptId);
+      if (targetState && conceptQs.length > 0) {
+        const firstQ = questionEngine.selectQuestion(conceptQs, {
+          targetConcept: conceptId,
+          learnerState: targetState,
+          currentAction: ActionType.PRACTICE, // Default for first load
+          attemptedQuestionIds: new Set()
+        });
+        setCurrentQuestion(firstQ);
+      }
+      
       setLoading(false);
     };
     
@@ -74,8 +98,6 @@ export function LearningWorkspace() {
   if (loading || !concept) {
     return <div className="flex-1 flex justify-center p-12"><div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>;
   }
-
-  const currentQuestion = questions[currentQuestionIdx];
 
   const handleSubmit = async () => {
     if (!selectedOption || !currentQuestion || !activeState || !user) return;
@@ -135,17 +157,66 @@ export function LearningWorkspace() {
     await supabase.from('learner_concept_states').upsert(newState, { onConflict: 'student_id,concept_id' });
   };
 
+  const handleAiRequest = async (type: AIRequestType) => {
+    if (!concept || !activeState) return;
+    setAiLoading(type);
+    
+    const response = await aiService.generateEducationalContent(type, {
+      concept,
+      subjectId: 'sub_python',
+      learnerState: activeState,
+      currentAction: recommendation?.action || ActionType.PRACTICE,
+      currentQuestion: currentQuestion || undefined,
+      selectedAnswer: selectedOption || undefined
+    });
+    
+    setAiLoading(null);
+    setAiResponse(response);
+
+    if (type === 'NEW_PRACTICE' && response.newQuestion) {
+      setQuestions(prev => [...prev, response.newQuestion!]);
+      
+      setAttemptedQuestionIds(prev => {
+        const next = new Set(prev);
+        if (currentQuestion) next.add(currentQuestion.id);
+        return next;
+      });
+
+      setCurrentQuestion(response.newQuestion);
+      setSelectedOption(null);
+      setShowFeedback(false);
+      setRecommendation(null);
+      setAiResponse(null);
+    }
+  };
+
   const nextActivity = () => {
+    if (!recommendation || !activeState || !conceptId) return;
+
+    if (recommendation.target_concept !== conceptId) {
+      // Jump to remediation or advance!
+      navigate(`/student/learn/${recommendation.target_concept}`);
+      return;
+    }
+
+    setAttemptedQuestionIds(prev => {
+      const next = new Set(prev);
+      if (currentQuestion) next.add(currentQuestion.id);
+      return next;
+    });
+
+    const nextQ = questionEngine.selectQuestion(questions, {
+      targetConcept: recommendation.target_concept,
+      learnerState: activeState,
+      currentAction: recommendation.action,
+      attemptedQuestionIds: new Set([...Array.from(attemptedQuestionIds), currentQuestion?.id].filter(Boolean) as string[])
+    });
+
+    setCurrentQuestion(nextQ);
     setSelectedOption(null);
     setShowFeedback(false);
     setRecommendation(null);
-    
-    if (currentQuestionIdx < questions.length - 1) {
-      setCurrentQuestionIdx(prev => prev + 1);
-    } else {
-      // Loop back or show completion
-      setCurrentQuestionIdx(0);
-    }
+    setAiResponse(null);
   };
 
   return (
@@ -167,9 +238,9 @@ export function LearningWorkspace() {
           </div>
           
           <div className="hidden sm:flex items-center gap-3">
-             <span className="text-sm text-slate-400">Activity {currentQuestionIdx + 1} of {questions.length}</span>
+             <span className="text-sm text-slate-400">Activity {attemptedQuestionIds.size + 1}</span>
              <div className="w-32 h-2 bg-slate-800 rounded-full overflow-hidden">
-               <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${((currentQuestionIdx + 1) / questions.length) * 100}%`}}></div>
+               <div className="h-full bg-indigo-500 transition-all duration-500" style={{ width: `${Math.min(((attemptedQuestionIds.size + 1) / 10) * 100, 100)}%`}}></div>
              </div>
           </div>
         </div>
@@ -192,11 +263,41 @@ export function LearningWorkspace() {
                 <br /><br />
                 This is a mock interactive lesson block. In a full implementation, this area renders markdown, code playgrounds, or instructional videos explaining the specific nuances of <strong>{concept.name}</strong> before transitioning directly into practice.
               </p>
+              
+              {/* AI Lesson Helpers */}
+              <div className="flex flex-wrap gap-3 mt-4 border-t border-surfaceBorder/50 pt-4">
+                <button 
+                  onClick={() => handleAiRequest('EXPLAIN_DIFFERENTLY')}
+                  disabled={aiLoading !== null}
+                  className="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-sm font-bold py-2 px-4 rounded-lg flex items-center gap-2 border border-indigo-500/20 transition-colors disabled:opacity-50"
+                >
+                  <Lightbulb className="w-4 h-4" /> 
+                  {aiLoading === 'EXPLAIN_DIFFERENTLY' ? 'Thinking...' : 'Explain Differently'}
+                </button>
+                <button 
+                  onClick={() => handleAiRequest('GIVE_EXAMPLE')}
+                  disabled={aiLoading !== null}
+                  className="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-sm font-bold py-2 px-4 rounded-lg flex items-center gap-2 border border-indigo-500/20 transition-colors disabled:opacity-50"
+                >
+                  <Terminal className="w-4 h-4" /> 
+                  {aiLoading === 'GIVE_EXAMPLE' ? 'Thinking...' : 'Give me an example'}
+                </button>
+              </div>
+
+              {/* Display AI Response for Lesson */}
+              {aiResponse && ['EXPLAIN_DIFFERENTLY', 'GIVE_EXAMPLE'].includes(aiResponse.type) && (
+                <div className="bg-indigo-950/40 p-5 rounded-2xl border border-indigo-500/30 animate-fade-in">
+                  <div className="flex items-center gap-2 text-indigo-400 font-bold mb-2 text-xs uppercase tracking-widest">
+                    <Lightbulb className="w-4 h-4" /> AI Assistant
+                  </div>
+                  <p className="text-slate-200">{aiResponse.content}</p>
+                </div>
+              )}
             </div>
           )}
 
           {/* Practice Block */}
-          {currentQuestion && (
+          {currentQuestion ? (
             <div className={`glass-panel p-6 sm:p-8 rounded-3xl border transition-colors duration-500 ${showFeedback ? isCorrect ? 'border-emerald-500/30 bg-emerald-950/10' : 'border-rose-500/30 bg-rose-950/10' : 'border-surfaceBorder/50 shadow-xl'}`}>
                <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
                  <Play className="w-5 h-5 text-indigo-400" />
@@ -204,7 +305,7 @@ export function LearningWorkspace() {
                </h3>
                
                <p className="text-lg text-slate-200 mb-8 font-medium">
-                 {currentQuestion.text}
+                 {currentQuestion.prompt || currentQuestion.text}
                </p>
                
                <div className="space-y-3">
@@ -238,7 +339,15 @@ export function LearningWorkspace() {
                </div>
                
                {!showFeedback && (
-                 <div className="mt-8 flex justify-end">
+                 <div className="mt-8 flex justify-between items-center">
+                   <button 
+                     onClick={() => handleAiRequest('GIVE_HINT')}
+                     disabled={aiLoading !== null}
+                     className="text-amber-400 hover:text-amber-300 text-sm font-bold flex items-center gap-2 disabled:opacity-50"
+                   >
+                     <Lightbulb className="w-4 h-4" />
+                     {aiLoading === 'GIVE_HINT' ? 'Generating hint...' : 'Give me a hint'}
+                   </button>
                    <button 
                      onClick={handleSubmit}
                      disabled={!selectedOption}
@@ -246,6 +355,13 @@ export function LearningWorkspace() {
                    >
                      Submit Answer
                    </button>
+                 </div>
+               )}
+               
+               {/* Display AI Hint */}
+               {aiResponse && aiResponse.type === 'GIVE_HINT' && !showFeedback && (
+                 <div className="mt-4 bg-amber-950/40 p-4 rounded-xl border border-amber-500/30 animate-fade-in">
+                   <p className="text-amber-200 text-sm">{aiResponse.content}</p>
                  </div>
                )}
 
@@ -263,9 +379,37 @@ export function LearningWorkspace() {
                          <p className="text-slate-300">
                            {isCorrect 
                              ? "Great job! Your evidence has been recorded."
-                             : `The correct answer was "${currentQuestion.correct_answer}". Review the lesson notes above if you're stuck.`
+                             : `The correct answer was "${currentQuestion.correct_answer}". `
                            }
+                           {currentQuestion.explanation && (
+                             <span className="block mt-2 font-medium text-slate-200">
+                               {currentQuestion.explanation}
+                             </span>
+                           )}
                          </p>
+                         
+                         {/* AI Incorrect Feedback helpers */}
+                         {!isCorrect && (
+                           <div className="mt-4">
+                             <button
+                               onClick={() => handleAiRequest('WHY_WRONG')}
+                               disabled={aiLoading !== null}
+                               className="text-rose-400 hover:text-rose-300 text-sm font-bold underline disabled:opacity-50"
+                             >
+                               {aiLoading === 'WHY_WRONG' ? 'Analyzing...' : 'Why was my answer wrong?'}
+                             </button>
+                           </div>
+                         )}
+
+                         {/* Display AI Explanation */}
+                         {aiResponse && aiResponse.type === 'WHY_WRONG' && (
+                           <div className="mt-4 bg-rose-950/40 p-4 rounded-xl border border-rose-500/30 animate-fade-in">
+                             <div className="flex items-center gap-2 text-rose-400 font-bold mb-1 text-xs uppercase tracking-widest">
+                               <Lightbulb className="w-3 h-3" /> AI Analysis
+                             </div>
+                             <p className="text-rose-200 text-sm">{aiResponse.content}</p>
+                           </div>
+                         )}
                       </div>
                     </div>
 
@@ -286,7 +430,16 @@ export function LearningWorkspace() {
                          </p>
                        </div>
                        
-                       <div className="mt-6 flex justify-end relative z-10">
+                       <div className="mt-6 flex flex-wrap justify-end gap-3 relative z-10">
+                         {recommendation.action === ActionType.PRACTICE && (
+                           <button 
+                             onClick={() => handleAiRequest('NEW_PRACTICE')}
+                             disabled={aiLoading !== null}
+                             className="bg-surfaceBorder hover:bg-surfaceBorder/80 text-white font-bold py-3 px-6 rounded-xl transition-all disabled:opacity-50"
+                           >
+                             {aiLoading === 'NEW_PRACTICE' ? 'Generating...' : 'Practice another generated question'}
+                           </button>
+                         )}
                          <button 
                            onClick={nextActivity}
                            className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 shadow-[0_0_20px_-5px_rgba(99,102,241,0.5)] transition-all hover:scale-105"
@@ -297,6 +450,18 @@ export function LearningWorkspace() {
                     </div>
                  </div>
                )}
+            </div>
+          ) : (
+            <div className="glass-panel p-8 rounded-3xl border border-surfaceBorder/50 text-center">
+               <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
+               <h3 className="text-xl font-bold text-white mb-2">You've completed all available activities!</h3>
+               <p className="text-slate-400 mb-6">Check your learning path to see what's next.</p>
+               <button 
+                 onClick={() => navigate('/student/learning-path')}
+                 className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-6 rounded-xl transition-all"
+               >
+                 Return to Path
+               </button>
             </div>
           )}
         </div>
