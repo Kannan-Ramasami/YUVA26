@@ -50,7 +50,7 @@
 
   /* Standardized Buttons to reduce inline clutter */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-bold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none active:scale-[0.98];
   }
 
   .btn-primary {

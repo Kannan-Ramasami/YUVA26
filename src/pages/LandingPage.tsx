@@ -215,10 +215,10 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <BrainCircuit className="w-6 h-6 text-primary-500" />
-            <span className="font-bold text-white text-lg">MasteryFlow</span>
+            <span className="font-bold text-white text-lg">ALE</span>
           </div>
           <p className="text-slate-500">
-            &copy; 2026 MasteryFlow. All rights reserved.
+            &copy; 2026 ALE. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-slate-400">
             <a href="#" className="hover:text-white transition-colors">Privacy</a>
