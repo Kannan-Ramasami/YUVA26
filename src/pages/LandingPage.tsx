@@ -44,10 +44,10 @@ export function LandingPage() {
             <ArrowRight className="w-5 h-5" />
           </Link>
           <Link 
-            to="/staff/login"
+            to="/mentor"
             className="flex-1 sm:flex-none btn-secondary rounded-full px-8 py-4 text-lg"
           >
-            Explore for Educators
+            Explore for Mentors
           </Link>
         </div>
       </section>
@@ -65,7 +65,7 @@ export function LandingPage() {
               Build your skills through a personalized learning path that adapts dynamically to your performance and memory.
             </p>
             <Link 
-              to="/student/login"
+              to="/student"
               className="btn-primary w-full group-hover:bg-primary-500 transition-colors"
             >
               Continue as Student
@@ -73,20 +73,20 @@ export function LandingPage() {
             </Link>
           </div>
 
-          {/* Staff Card */}
+          {/* Mentor Card */}
           <div className="glass-panel interactive-card p-8 rounded-3xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-600/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 group-hover:bg-indigo-500/20 transition-colors pointer-events-none"></div>
             
             <Users className="w-16 h-16 text-indigo-400 mb-6" />
-            <h2 className="text-3xl font-bold text-white mb-4">Staff</h2>
+            <h2 className="text-3xl font-bold text-white mb-4">Mentor</h2>
             <p className="text-slate-400 text-lg mb-8 h-16">
               Create classrooms, monitor true learner mastery, and guide students with evidence-based interventions.
             </p>
             <Link 
-              to="/staff/login"
+              to="/mentor"
               className="btn-outline w-full text-indigo-300 hover:text-white"
             >
-              Continue as Staff
+              Continue as Mentor
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>

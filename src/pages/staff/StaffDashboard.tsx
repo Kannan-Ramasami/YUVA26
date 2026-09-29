@@ -56,7 +56,7 @@ export function StaffDashboard() {
       {/* 1. Welcome Section */}
       <section className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white">Welcome back, {profile?.full_name.split(' ')[0] || 'Educator'}.</h1>
+          <h1 className="text-3xl font-bold text-white">Welcome back, {profile?.full_name.split(' ')[0] || 'Mentor'}.</h1>
           <p className="text-slate-400 mt-2">Here is your classroom overview for today.</p>
         </div>
         <div className="flex flex-wrap gap-3 w-full sm:w-auto">

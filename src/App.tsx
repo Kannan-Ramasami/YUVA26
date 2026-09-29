@@ -27,6 +27,11 @@ import { DemoComparison } from './pages/demo/AdaptiveComparison';
 import { EvaluationSuite } from './pages/admin/EvaluationSuite';
 import { Login } from './pages/auth/Login';
 import { Register } from './pages/auth/Register';
+import { StudentPanel } from './pages/student/StudentPanel';
+import { MentorPanel } from './pages/staff/MentorPanel';
+import { ModeSelection } from './pages/student/ModeSelection';
+import { ClassSelection } from './pages/staff/ClassSelection';
+import { JoinClass } from './pages/staff/JoinClass';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -38,6 +43,8 @@ function App() {
           {/* Public Routes with AppLayout */}
           <Route element={<AppLayout />}>
             <Route path="/" element={<LandingPage />} />
+            <Route path="student" element={<StudentPanel />} />
+            <Route path="mentor" element={<MentorPanel />} />
             <Route path="student/login" element={<Login role="student" />} />
             <Route path="student/register" element={<Register role="student" />} />
             <Route path="staff/login" element={<Login role="staff" />} />
@@ -52,6 +59,7 @@ function App() {
             
             {/* Standard Layout Routes */}
             <Route element={<StudentLayout />}>
+              <Route path="student/mode" element={<ModeSelection />} />
               <Route path="student/dashboard" element={<StudentDashboard />} />
               <Route path="student/individual" element={<IndividualLearningSetup />} />
               <Route path="student/diagnostic/start" element={<StartDiagnostic />} />
@@ -64,13 +72,14 @@ function App() {
               <Route path="student/classrooms" element={<StudentClassrooms />} />
               <Route path="student/classrooms/:id" element={<StudentClassroomDetail />} />
               <Route path="student/classroom/join" element={<JoinClassroom />} />
-              <Route path="student" element={<StudentDashboard />} />
             </Route>
           </Route>
 
           {/* Protected Staff Routes */}
           <Route element={<ProtectedRoute allowedRole="staff" />}>
             <Route element={<StaffLayout />}>
+              <Route path="staff/class-selection" element={<ClassSelection />} />
+              <Route path="staff/join-class" element={<JoinClass />} />
               <Route path="staff/dashboard" element={<StaffDashboard />} />
               <Route path="staff/graph" element={<StaffConceptGraph />} />
               <Route path="staff/classrooms/create" element={<CreateClassroom />} />
@@ -80,7 +89,6 @@ function App() {
               <Route path="staff/interventions" element={<StaffInterventions />} />
               <Route path="staff/analytics" element={<StaffAnalytics />} />
               <Route path="admin/evaluation" element={<EvaluationSuite />} />
-              <Route path="staff" element={<StaffDashboard />} />
             </Route>
           </Route>
         </Routes>

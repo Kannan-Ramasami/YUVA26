@@ -31,7 +31,7 @@ export function StaffLayout() {
               <Sparkles className="w-6 h-6 text-indigo-400" />
             </div>
             <span className="text-xl font-bold tracking-tight text-white group-hover:text-indigo-100 transition-colors hidden sm:block">
-              MasteryFlow Staff
+              MasteryFlow Mentor
             </span>
           </Link>
           

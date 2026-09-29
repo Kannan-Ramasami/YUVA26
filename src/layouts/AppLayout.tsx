@@ -35,7 +35,7 @@ export function AppLayout() {
             {user && profile ? (
               <>
                 <Link 
-                  to={`/${profile.role}/dashboard`}
+                  to={profile.role === 'student' ? '/student/dashboard' : '/staff/dashboard'}
                   className="hidden sm:flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors"
                 >
                   <LayoutDashboard className="w-4 h-4" />

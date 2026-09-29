@@ -21,7 +21,7 @@ export function Login({ role }: LoginProps) {
 
   useEffect(() => {
     if (user && profile) {
-      const defaultDashboard = `/${profile.role}/dashboard`;
+      const defaultDashboard = profile.role === 'student' ? '/student/mode' : '/staff/class-selection';
       const from = (location.state as any)?.from?.pathname || defaultDashboard;
       navigate(from, { replace: true });
     } else if (user && !profile) {
@@ -62,7 +62,7 @@ export function Login({ role }: LoginProps) {
             <LogIn className="w-6 h-6 text-primary-400" />
           </div>
           <h1 className="text-2xl font-bold text-white">
-            {isStaff ? 'Staff Portal' : 'Student Portal'}
+            {isStaff ? 'Mentor Portal' : 'Student Portal'}
           </h1>
           <p className="text-slate-400 text-sm mt-1">Sign in to continue to MasteryFlow</p>
         </div>

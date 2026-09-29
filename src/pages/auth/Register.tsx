@@ -24,7 +24,8 @@ export function Register({ role }: RegisterProps) {
 
   useEffect(() => {
     if (user && profile) {
-      navigate(`/${profile.role}/dashboard`, { replace: true });
+      const defaultDashboard = profile.role === 'student' ? '/student/mode' : '/staff/class-selection';
+      navigate(defaultDashboard, { replace: true });
     } else if (user && !profile) {
       setError('Profile could not be loaded. Please ensure the Supabase schema (supabase_setup.sql) has been run.');
     }
@@ -84,7 +85,7 @@ export function Register({ role }: RegisterProps) {
             <UserPlus className="w-6 h-6 text-primary-400" />
           </div>
           <h1 className="text-2xl font-bold text-white">
-            Register as {isStaff ? 'Staff' : 'Student'}
+            Register as {isStaff ? 'Mentor' : 'Student'}
           </h1>
           <p className="text-slate-400 text-sm mt-1">Create your MasteryFlow account</p>
         </div>

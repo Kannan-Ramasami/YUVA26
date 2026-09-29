@@ -3,9 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchStudentDashboardData } from '../services/studentDashboardMock';
 import type { StudentDashboardData } from '../services/studentDashboardMock';
-import { 
-  BookOpen, 
-  Users, 
+import {
   BrainCircuit, 
   Play, 
   Target, 
@@ -45,7 +43,7 @@ export function StudentDashboard() {
     );
   }
 
-  const { overview, currentLearning, todayRecommendation, recentActivity, needsReview, joinedClassroomsCount } = data;
+  const { overview, currentLearning, todayRecommendation, recentActivity, needsReview } = data;
   const isNew = currentLearning === null;
 
   return (
@@ -111,40 +109,6 @@ export function StudentDashboard() {
             )}
           </section>
 
-          {/* 3. Learning Modes */}
-          <section className="grid sm:grid-cols-2 gap-6">
-            <div className="glass-panel interactive-card p-6 rounded-2xl group">
-              <div className="w-12 h-12 bg-primary-500/10 rounded-xl flex items-center justify-center border border-primary-500/20 mb-4 group-hover:scale-110 transition-transform">
-                <BookOpen className="w-6 h-6 text-primary-400" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Learn Individually</h3>
-              <p className="text-slate-400 text-sm mb-6 h-10">Follow a learning path personalized to your own mastery, history, and learning goals.</p>
-              <Link to="/student/individual" className="btn-secondary w-full text-center">
-                Start Individual Learning
-              </Link>
-            </div>
-
-            <div className="glass-panel interactive-card p-6 rounded-2xl group">
-              <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center border border-indigo-500/20 mb-4 group-hover:scale-110 transition-transform">
-                <Users className="w-6 h-6 text-indigo-400" />
-              </div>
-              <h3 className="text-lg font-bold text-white mb-2">Learn with a Classroom</h3>
-              <p className="text-slate-400 text-sm mb-6 h-10">Learn within a teacher-guided classroom while your learning path adapts to your individual needs.</p>
-              
-              {joinedClassroomsCount === 0 ? (
-                <div>
-                  <p className="text-xs text-amber-400 font-semibold mb-2">No classrooms yet</p>
-                  <Link to="/student/classroom/join" className="btn-secondary w-full text-center">
-                    Join a Classroom
-                  </Link>
-                </div>
-              ) : (
-                <Link to="/student/classrooms" className="btn-secondary w-full text-center">
-                  Open Classrooms
-                </Link>
-              )}
-            </div>
-          </section>
 
           {/* 6. Recent Activity */}
           <section className="glass-panel p-6 rounded-2xl">
